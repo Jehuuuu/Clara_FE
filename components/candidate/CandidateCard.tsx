@@ -1,15 +1,15 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, Share2 } from "lucide-react";
+import { Heart, Share2, FileText, MoreVertical } from "lucide-react";
 import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/common/Card";
 import { Candidate } from "@/lib/dummy-data";
 import { cn, truncate } from "@/lib/utils";
-import { useBookmarks } from "@/context/BookmarkContext";
+import { useBookmarks, GovernmentPosition } from "@/context/BookmarkContext";
 
 interface CandidateCardProps {
   candidate: Candidate;
@@ -26,16 +26,34 @@ export function CandidateCard({
   onSelect,
   isSelected = false,
 }: CandidateCardProps) {
-  const { isBookmarked, toggleBookmark } = useBookmarks();
+  const { 
+    isBookmarked, 
+    addBookmark, 
+    removeBookmark, 
+    bookmarkedCandidates
+  } = useBookmarks();
+  
+  // Determine if candidate is bookmarked
   const bookmarked = isBookmarked(candidate.id);
-
+  
+  // Find bookmark data if it exists
+  const bookmarkData = bookmarkedCandidates.find(b => b.candidateId === candidate.id);
+  
   // Get the first 3 issues to highlight
   const topIssues = Object.entries(candidate.issues).slice(0, 3);
   
-  const handleBookmarkClick = (e: React.MouseEvent) => {
+  // Simple toggle bookmark
+  const handleBookmarkToggle = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    toggleBookmark(candidate.id);
+    
+    if (bookmarked) {
+      removeBookmark(candidate.id);
+    } else {
+      // Default to candidate's position or "Other"
+      const position = (candidate.position as GovernmentPosition) || "Other";
+      addBookmark(candidate.id, position);
+    }
   };
   
   const handleShareClick = (e: React.MouseEvent) => {
@@ -95,48 +113,61 @@ export function CandidateCard({
               </Badge>
             ))}
           </div>
+          
+          {bookmarked && bookmarkData?.notes && (
+            <div className="mt-4 pt-4 border-t">
+              <h4 className="text-sm font-medium mb-2 flex items-center">
+                <FileText className="h-3 w-3 mr-1" />
+                My Notes:
+              </h4>
+              <p className="text-xs text-muted-foreground italic">
+                {truncate(bookmarkData.notes, 100)}
+              </p>
+            </div>
+          )}
         </CardContent>
-        
-        {showActions && (
-          <CardFooter className="p-4 pt-0 justify-between">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={onSelect}
-              className={cn(isSelected && "bg-primary/10")}
+      </Link>
+      
+      {showActions && (
+        <CardFooter className="p-4 pt-0 justify-between">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={(e) => {
+              e.preventDefault();
+              if (onSelect) onSelect();
+            }}
+            className={cn(isSelected && "bg-primary/10")}
+          >
+            {isSelected ? "Selected" : "Select"}
+          </Button>
+          
+          <div className="flex space-x-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={handleBookmarkToggle}
+              aria-label={bookmarked ? "Remove from bookmarks" : "Add to bookmarks"}
             >
-              {isSelected ? "Selected" : "Select"}
+              <Heart className={cn(
+                "h-4 w-4", 
+                bookmarked ? "fill-red-500 text-red-500" : "text-muted-foreground"
+              )} />
             </Button>
             
-            <div className="flex space-x-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={handleBookmarkClick}
-                aria-label={bookmarked ? "Remove from bookmarks" : "Add to bookmarks"}
-              >
-                <Heart
-                  className={cn(
-                    "h-4 w-4",
-                    bookmarked ? "fill-red-500 text-red-500" : "text-muted-foreground"
-                  )}
-                />
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={handleShareClick}
-                aria-label="Share candidate"
-              >
-                <Share2 className="h-4 w-4 text-muted-foreground" />
-              </Button>
-            </div>
-          </CardFooter>
-        )}
-      </Link>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={handleShareClick}
+              aria-label="Share candidate"
+            >
+              <Share2 className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          </div>
+        </CardFooter>
+      )}
     </Card>
   );
 } 

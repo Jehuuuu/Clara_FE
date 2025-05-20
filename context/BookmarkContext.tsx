@@ -2,16 +2,38 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
+// Define a type for the Philippine government positions
+export type GovernmentPosition = 
+  | "President"
+  | "Vice President"
+  | "Senator"
+  | "Representative" 
+  | "Governor"
+  | "Mayor" 
+  | "Other";
+
+// Define a type for a candidate bookmark with notes
+export interface CandidateBookmark {
+  candidateId: string;
+  position: GovernmentPosition;
+  notes: string;
+  dateAdded: string;
+}
+
 interface BookmarkContextType {
-  // Bookmarked candidates
-  bookmarkedCandidates: string[];
+  // Bookmarked candidates with positions and notes
+  bookmarkedCandidates: CandidateBookmark[];
   isBookmarked: (id: string) => boolean;
-  toggleBookmark: (id: string) => void;
+  addBookmark: (candidateId: string, position: GovernmentPosition) => void;
+  removeBookmark: (candidateId: string) => void;
+  updateBookmarkNotes: (candidateId: string, notes: string) => void;
+  updateBookmarkPosition: (candidateId: string, position: GovernmentPosition) => void;
+  getBookmarksByPosition: (position: GovernmentPosition) => CandidateBookmark[];
   clearBookmarks: () => void;
   
   // Saved comparisons
-  savedComparisons: { id: string; candidateIds: [string, string] }[];
-  saveComparison: (candidateIds: [string, string]) => void;
+  savedComparisons: { id: string; candidateIds: string[]; title: string; dateCreated: string }[];
+  saveComparison: (candidateIds: string[], title: string) => void;
   removeComparison: (comparisonId: string) => void;
   clearComparisons: () => void;
   
@@ -34,9 +56,9 @@ const STORAGE_KEYS = {
 
 export function BookmarkProvider({ children }: { children: ReactNode }) {
   // State
-  const [bookmarkedCandidates, setBookmarkedCandidates] = useState<string[]>([]);
+  const [bookmarkedCandidates, setBookmarkedCandidates] = useState<CandidateBookmark[]>([]);
   const [savedComparisons, setSavedComparisons] = useState<
-    { id: string; candidateIds: [string, string] }[]
+    { id: string; candidateIds: string[]; title: string; dateCreated: string }[]
   >([]);
   const [savedQuizResult, setSavedQuizResult] = useState<{
     date: string;
@@ -50,12 +72,42 @@ export function BookmarkProvider({ children }: { children: ReactNode }) {
     try {
       const storedBookmarks = localStorage.getItem(STORAGE_KEYS.BOOKMARKS);
       if (storedBookmarks) {
-        setBookmarkedCandidates(JSON.parse(storedBookmarks));
+        // Handle migrating from old format (string[]) to new format (CandidateBookmark[])
+        const parsedData = JSON.parse(storedBookmarks);
+        
+        if (Array.isArray(parsedData)) {
+          if (parsedData.length > 0 && typeof parsedData[0] === 'string') {
+            // Old format: convert to new format
+            const migratedBookmarks = parsedData.map((id: string) => ({
+              candidateId: id,
+              position: "Other" as GovernmentPosition,
+              notes: "",
+              dateAdded: new Date().toISOString()
+            }));
+            setBookmarkedCandidates(migratedBookmarks);
+          } else {
+            // Already in new format
+            setBookmarkedCandidates(parsedData);
+          }
+        }
       }
       
       const storedComparisons = localStorage.getItem(STORAGE_KEYS.COMPARISONS);
       if (storedComparisons) {
-        setSavedComparisons(JSON.parse(storedComparisons));
+        const parsedData = JSON.parse(storedComparisons);
+        // Migrate old comparisons format if needed
+        if (Array.isArray(parsedData) && parsedData.length > 0) {
+          if ('candidateIds' in parsedData[0] && !('title' in parsedData[0])) {
+            const migratedComparisons = parsedData.map((comp: any) => ({
+              ...comp,
+              title: `Comparison ${comp.id}`,
+              dateCreated: new Date().toISOString()
+            }));
+            setSavedComparisons(migratedComparisons);
+          } else {
+            setSavedComparisons(parsedData);
+          }
+        }
       }
       
       const storedQuizResult = localStorage.getItem(STORAGE_KEYS.QUIZ_RESULT);
@@ -112,14 +164,52 @@ export function BookmarkProvider({ children }: { children: ReactNode }) {
   }, [savedQuizResult]);
 
   // Bookmark methods
-  const isBookmarked = (id: string) => bookmarkedCandidates.includes(id);
+  const isBookmarked = (id: string) => {
+    return bookmarkedCandidates.some(bookmark => bookmark.candidateId === id);
+  };
 
-  const toggleBookmark = (id: string) => {
-    if (isBookmarked(id)) {
-      setBookmarkedCandidates(bookmarkedCandidates.filter((candidateId) => candidateId !== id));
-    } else {
-      setBookmarkedCandidates([...bookmarkedCandidates, id]);
-    }
+  const addBookmark = (candidateId: string, position: GovernmentPosition = "Other") => {
+    if (isBookmarked(candidateId)) return;
+    
+    const newBookmark: CandidateBookmark = {
+      candidateId,
+      position,
+      notes: "",
+      dateAdded: new Date().toISOString()
+    };
+    
+    setBookmarkedCandidates([...bookmarkedCandidates, newBookmark]);
+  };
+
+  const removeBookmark = (candidateId: string) => {
+    setBookmarkedCandidates(
+      bookmarkedCandidates.filter(bookmark => bookmark.candidateId !== candidateId)
+    );
+  };
+
+  const updateBookmarkNotes = (candidateId: string, notes: string) => {
+    setBookmarkedCandidates(
+      bookmarkedCandidates.map(bookmark => 
+        bookmark.candidateId === candidateId 
+          ? { ...bookmark, notes } 
+          : bookmark
+      )
+    );
+  };
+
+  const updateBookmarkPosition = (candidateId: string, position: GovernmentPosition) => {
+    setBookmarkedCandidates(
+      bookmarkedCandidates.map(bookmark => 
+        bookmark.candidateId === candidateId 
+          ? { ...bookmark, position } 
+          : bookmark
+      )
+    );
+  };
+
+  // Get bookmarks by position
+  const getBookmarksByPosition = (position: GovernmentPosition): CandidateBookmark[] => {
+    return bookmarkedCandidates.filter(bookmark => bookmark.position === position);
   };
 
   const clearBookmarks = () => {
@@ -127,18 +217,16 @@ export function BookmarkProvider({ children }: { children: ReactNode }) {
   };
 
   // Comparison methods
-  const saveComparison = (candidateIds: [string, string]) => {
-    // Check if already saved
-    const alreadySaved = savedComparisons.some(
-      (comp) =>
-        (comp.candidateIds[0] === candidateIds[0] && comp.candidateIds[1] === candidateIds[1]) ||
-        (comp.candidateIds[0] === candidateIds[1] && comp.candidateIds[1] === candidateIds[0])
-    );
-
-    if (alreadySaved) return;
-
+  const saveComparison = (candidateIds: string[], title: string = "Comparison") => {
     const id = Math.random().toString(36).substring(2, 9);
-    setSavedComparisons([...savedComparisons, { id, candidateIds }]);
+    const newComparison = { 
+      id, 
+      candidateIds, 
+      title, 
+      dateCreated: new Date().toISOString() 
+    };
+    
+    setSavedComparisons([...savedComparisons, newComparison]);
   };
 
   const removeComparison = (comparisonId: string) => {
@@ -168,7 +256,11 @@ export function BookmarkProvider({ children }: { children: ReactNode }) {
       value={{
         bookmarkedCandidates,
         isBookmarked,
-        toggleBookmark,
+        addBookmark,
+        removeBookmark,
+        updateBookmarkNotes,
+        updateBookmarkPosition,
+        getBookmarksByPosition,
         clearBookmarks,
         savedComparisons,
         saveComparison,
