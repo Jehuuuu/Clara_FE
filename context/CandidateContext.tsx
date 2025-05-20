@@ -136,7 +136,7 @@ export function CandidateProvider({ children }: { children: ReactNode }) {
   // Get unique parties
   const getUniqueParties = () => {
     const parties = candidates.map(candidate => candidate.party);
-    return [...new Set(parties)];
+    return Array.from(new Set(parties));
   };
 
   return (

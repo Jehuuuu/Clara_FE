@@ -10,6 +10,7 @@ import { CandidateProvider } from "@/context/CandidateContext";
 import { BookmarkProvider } from "@/context/BookmarkContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { QuizProvider } from "@/context/QuizContext";
+import { ChatProvider } from "@/context/ChatContext";
 import "@/styles/globals.css";
 
 // We're using a client component with manual head tags for metadata
@@ -35,13 +36,15 @@ export default function RootLayout({
             <CandidateProvider>
               <BookmarkProvider>
                 <QuizProvider>
-                  <div className="flex min-h-screen flex-col">
-                    <Navbar />
-                    <main className="flex-1">{children}</main>
-                    <Footer />
-                    <Toasts />
-                    <Modal />
-                  </div>
+                  <ChatProvider>
+                    <div className="flex min-h-screen flex-col">
+                      <Navbar />
+                      <main className="flex-1">{children}</main>
+                      <Footer />
+                      <Toasts />
+                      <Modal />
+                    </div>
+                  </ChatProvider>
                 </QuizProvider>
               </BookmarkProvider>
             </CandidateProvider>

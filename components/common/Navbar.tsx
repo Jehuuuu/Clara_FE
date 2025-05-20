@@ -13,6 +13,7 @@ const navItems = [
   { label: "Home", href: "/" },
   { label: "Candidates", href: "/candidates" },
   { label: "Issues", href: "/issues/economy" },
+  { label: "Compare", href: "/compare" },
   { label: "Quiz", href: "/quiz" },
   { label: "Ask", href: "/ask" },
 ];
