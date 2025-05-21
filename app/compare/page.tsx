@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { candidates } from "@/lib/dummy-data";
 import { Button } from "@/components/common/Button";
 import { Card } from "@/components/common/Card";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, ArrowLeft, Plus } from "lucide-react";
 
 // Define the candidate structure based on actual data
 interface CandidateIssue {
@@ -23,12 +25,25 @@ interface EnhancedCandidate {
 }
 
 export default function ComparePage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [selectedCandidates, setSelectedCandidates] = useState<string[]>([]);
   const [selectedIssue, setSelectedIssue] = useState<string>("economy");
   const [isLoading, setIsLoading] = useState(false);
 
   // Treat candidates as EnhancedCandidate type
   const typedCandidates = candidates as unknown as EnhancedCandidate[];
+
+  // Process URL parameters on load
+  useEffect(() => {
+    const ids = searchParams.get('ids');
+    if (ids) {
+      const idArray = ids.split(',');
+      setSelectedCandidates(idArray.filter(id => 
+        typedCandidates.some(candidate => candidate.id === id)
+      ).slice(0, 3));
+    }
+  }, [searchParams, typedCandidates]);
 
   const issues = [
     { id: "economy", label: "Economy" },
@@ -40,13 +55,13 @@ export default function ComparePage() {
 
   const handleCandidateToggle = (candidateId: string) => {
     setSelectedCandidates(prev => {
-      if (prev.includes(candidateId)) {
-        return prev.filter(id => id !== candidateId);
-      } else {
-        // Limit to 3 candidates for comparison
-        if (prev.length >= 3) return prev;
-        return [...prev, candidateId];
-      }
+      const newSelection = prev.includes(candidateId)
+        ? prev.filter(id => id !== candidateId)
+        : prev.length >= 3 ? prev : [...prev, candidateId];
+      
+      // Update URL with the new selection
+      router.push(`/compare?ids=${newSelection.join(',')}`);
+      return newSelection;
     });
   };
 
@@ -58,6 +73,13 @@ export default function ComparePage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
+      <div className="mb-6">
+        <Link href="/candidates" className="flex items-center text-blue-600 hover:underline">
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Back to all candidates
+        </Link>
+      </div>
+      
       <h1 className="text-3xl font-bold mb-8">Compare Candidates</h1>
       
       <div className="grid md:grid-cols-3 gap-6">
@@ -85,13 +107,41 @@ export default function ComparePage() {
                     className="w-6 h-6 rounded-full mr-3 flex-shrink-0"
                     style={{ backgroundColor: candidate.color }}
                   />
-                  <div>
+                  <div className="flex-grow">
                     <p className="font-medium">{candidate.name}</p>
                     <p className="text-xs text-muted-foreground">{candidate.party}</p>
                   </div>
+                  {selectedCandidates.includes(candidate.id) && (
+                    <div className="text-primary text-sm font-medium">Selected</div>
+                  )}
                 </div>
               ))}
             </div>
+            
+            {selectedCandidates.length > 0 && (
+              <div className="mb-6">
+                <Button 
+                  variant="outline" 
+                  className="w-full mb-2" 
+                  asChild
+                >
+                  <Link href="/my-picks">
+                    View My Saved Candidates
+                  </Link>
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full" 
+                  asChild
+                >
+                  <Link href="/candidates">
+                    <Plus className="h-4 w-4 mr-1" />
+                    Find More Candidates
+                  </Link>
+                </Button>
+              </div>
+            )}
             
             <h2 className="text-xl font-semibold mb-4">Select Issue</h2>
             <div className="space-y-2 mb-6">

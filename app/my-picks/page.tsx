@@ -394,39 +394,41 @@ const CompactCandidateCard = ({
   onSelect: () => void;
 }) => {
   return (
-    <Card className={`overflow-hidden transition-all border-2 ${isSelected ? 'border-primary' : 'border-black'} w-full aspect-[2/3] relative flex flex-col`}>
-      <div 
-        className="absolute top-1 right-1 z-10"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onSelect();
-        }}
-      >
-        <Star 
-          className={`h-3 w-3 cursor-pointer ${isSelected ? 'fill-primary text-primary' : 'text-black'}`}
-        />
-      </div>
-      
-      <div className="relative w-full h-16 overflow-hidden">
-        <Image
-          src={candidate.image || "/placeholder-candidate.jpg"}
-          alt={candidate.name}
-          fill
-          className="object-cover"
-        />
-      </div>
-      
-      <div className="p-1 flex-grow flex flex-col text-[10px]">
-        <h3 className="font-medium truncate">{candidate.name}</h3>
-        <p className="text-muted-foreground truncate">{candidate.party}</p>
-        {candidate.notes && (
-          <p className="mt-auto line-clamp-1 text-muted-foreground italic">
-            {candidate.notes}
-          </p>
-        )}
-      </div>
-    </Card>
+    <Link href={`/candidate/${candidate.id}`}>
+      <Card className={`rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden transition-all hover:shadow-md ${isSelected ? 'ring-2 ring-primary' : ''} w-full aspect-[2/3] relative flex flex-col`}>
+        <div 
+          className="absolute top-1 right-1 z-10"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onSelect();
+          }}
+        >
+          <Star 
+            className={`h-3 w-3 cursor-pointer ${isSelected ? 'fill-primary text-primary' : 'text-black'}`}
+          />
+        </div>
+        
+        <div className="relative w-full h-16 overflow-hidden">
+          <Image
+            src={candidate.image || "/placeholder-candidate.jpg"}
+            alt={candidate.name}
+            fill
+            className="object-cover"
+          />
+        </div>
+        
+        <div className="p-1 flex-grow flex flex-col text-[10px]">
+          <h3 className="font-medium truncate">{candidate.name}</h3>
+          <p className="text-muted-foreground truncate">{candidate.party}</p>
+          {candidate.notes && (
+            <p className="mt-auto line-clamp-1 text-muted-foreground italic">
+              {candidate.notes}
+            </p>
+          )}
+        </div>
+      </Card>
+    </Link>
   );
 };
 
@@ -640,9 +642,12 @@ export default function MyPicksPage() {
           {hasBookmarks && bookmarksByCategory.length === 0 && (
             <div className="text-center py-8 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <h3 className="text-xl font-medium mb-2">No Matching Candidates</h3>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground mb-4">
                 Try adjusting your search or filter criteria.
               </p>
+              <Button asChild>
+                <Link href="/candidates">Browse Candidates</Link>
+              </Button>
             </div>
           )}
         </div>

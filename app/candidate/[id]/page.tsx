@@ -116,12 +116,32 @@ export default function CandidateDetailPage() {
                 </div>
               )}
               
-              <Link href={candidate.website} target="_blank" rel="noopener noreferrer" className="w-full">
-                <Button variant="outline" className="w-full flex items-center justify-center gap-2">
-                  <ExternalLink className="h-4 w-4" />
-                  Visit Website
-                </Button>
-              </Link>
+              <div className="w-full space-y-3">
+                <Link href={candidate.website} target="_blank" rel="noopener noreferrer" className="w-full">
+                  <Button variant="outline" className="w-full flex items-center justify-center gap-2">
+                    <ExternalLink className="h-4 w-4" />
+                    Visit Website
+                  </Button>
+                </Link>
+                
+                <Link href={`/compare?ids=${candidateId}`} className="w-full">
+                  <Button variant="outline" className="w-full">
+                    Compare With Others
+                  </Button>
+                </Link>
+                
+                <Link href={`/my-picks`} className="w-full">
+                  <Button variant="outline" className="w-full">
+                    View My Saved Candidates
+                  </Button>
+                </Link>
+                
+                <Link href={`/ask?about=${candidate.name}`} className="w-full">
+                  <Button variant="secondary" className="w-full">
+                    Ask Clara About This Candidate
+                  </Button>
+                </Link>
+              </div>
             </div>
           </Card>
         </div>
