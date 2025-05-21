@@ -3,24 +3,21 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Sun, Moon, Search, User, Info } from "lucide-react";
+import { Menu, X, Sun, Moon, User, Info } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { cn } from "@/lib/utils";
 import { useUI } from "@/context/UIContext";
 import { useAuth } from "@/context/AuthContext";
 
 const navItems = [
-  { label: "Home", href: "/" },
+  { label: "Ask", href: "/ask" },
   { label: "Candidates", href: "/candidates" },
   { label: "Issues", href: "/issues/economy" },
-  { label: "Compare", href: "/compare" },
-  { label: "Quiz", href: "/quiz" },
-  { label: "Ask", href: "/ask" },
+  { label: "Pulse", href: "/quiz" }
 ];
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [showMyPicksTooltip, setShowMyPicksTooltip] = useState(false);
   const pathname = usePathname();
@@ -90,17 +87,6 @@ export function Navbar() {
         
         {/* Right side items */}
         <div className="flex items-center space-x-2">
-          {/* Search toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsSearchOpen(!isSearchOpen)}
-            aria-label="Search"
-            className="hidden md:flex"
-          >
-            <Search className="h-5 w-5" />
-          </Button>
-          
           {/* Theme toggle */}
           <Button
             variant="ghost"
@@ -296,36 +282,6 @@ export function Navbar() {
                 )}
               </Button>
             </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Search overlay */}
-      {isSearchOpen && (
-        <div className="absolute inset-x-0 top-full bg-background border-b">
-          <div className="container px-4 py-4 sm:px-6">
-            <div className="relative">
-              <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search candidates, issues..."
-                className="h-10 w-full rounded-md border border-input bg-background pl-8 pr-4 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                autoFocus
-                onKeyDown={e => {
-                  if (e.key === "Escape") setIsSearchOpen(false);
-                }}
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-0 top-0 h-full"
-                onClick={() => setIsSearchOpen(false)}
-                aria-label="Close search"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            {/* Quick search results would go here */}
           </div>
         </div>
       )}

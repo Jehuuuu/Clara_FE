@@ -171,6 +171,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   
   // Create a new chat
   const createChat = () => {
+    // Only allow authenticated users to create persistent chats
+    if (!user) {
+      console.log("Guest users cannot create persistent chats");
+      return;
+    }
+    
     const newChat: Chat = {
       id: `chat-${Date.now()}`,
       title: "New Conversation",
@@ -190,6 +196,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   
   // Update a chat
   const updateChat = (chatId: string, updates: Partial<Omit<Chat, "id">>) => {
+    // Only allow authenticated users to update chats
+    if (!user) {
+      console.log("Guest users cannot update persistent chats");
+      return;
+    }
+    
     setChats(prev => {
       const updatedChats = prev.map(chat => 
         chat.id === chatId 
@@ -209,6 +221,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   
   // Delete a chat
   const deleteChat = (chatId: string) => {
+    // Only allow authenticated users to delete chats
+    if (!user) {
+      console.log("Guest users cannot delete persistent chats");
+      return;
+    }
+    
     setChats(prev => prev.filter(chat => chat.id !== chatId));
     
     // If current chat is being deleted, clear current chat
@@ -219,6 +237,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   
   // Set current chat
   const setCurrentChat = (chatId: string | null) => {
+    // Only allow authenticated users to switch between saved chats
+    if (!user) {
+      console.log("Guest users cannot switch between persistent chats");
+      return;
+    }
+    
     if (chatId === null) {
       setCurrentChatState(null);
       return;
@@ -230,7 +254,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   
   // Add message to current chat
   const addMessageToCurrentChat = (message: Omit<Message, "id">) => {
-    if (!currentChat) return;
+    // Only allow authenticated users to add messages to persistent chats
+    if (!user || !currentChat) {
+      console.log("Guest users cannot add messages to persistent chats");
+      return;
+    }
     
     const newMessage: Message = {
       ...message,
@@ -264,6 +292,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   
   // Clear current chat
   const clearCurrentChat = () => {
+    // Only allow authenticated users to clear their current chat
+    if (!user) {
+      console.log("Guest users cannot clear persistent chats");
+      return;
+    }
+    
     setCurrentChatState(null);
   };
   

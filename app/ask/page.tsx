@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { EnhancedChatInterface } from "@/components/chat/EnhancedChatInterface";
+import { ClientSidebar } from "@/components/chat/ClientSidebar";
 
 export const metadata: Metadata = {
   title: "Ask Clara | Election Awareness Portal",
@@ -15,9 +16,18 @@ export default function AskPage() {
           <p className="text-lg text-muted-foreground mt-2">
             Ask questions about candidates, policies, or issues to get personalized information and discover candidates who align with your views.
           </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            <b>Note:</b> You can use the chat even without an account, but your conversation history won't be saved. 
+            Sign in to save your chats and access them later.
+          </p>
         </div>
         
-        <EnhancedChatInterface />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <ClientSidebar />
+          <div className="md:col-span-3">
+            <EnhancedChatInterface />
+          </div>
+        </div>
         
         <div className="mt-8">
           <h2 className="text-xl font-semibold mb-4">Sample Questions</h2>

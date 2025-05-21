@@ -27,8 +27,11 @@ import {
 import Image from "next/image";
 import { Badge } from "@/components/common/Badge";
 
+// Custom extended government position type that includes all needed positions
+type ExtendedPosition = GovernmentPosition | "Party-list Representative" | "District Representative" | "Vice Governor" | "Vice Mayor" | "Councilor";
+
 // Define the categories to display based on Philippine electoral system
-const POSITION_CATEGORIES: { position: GovernmentPosition; label: string }[] = [
+const POSITION_CATEGORIES = [
   // National Level
   { position: "President", label: "President" },
   { position: "Vice President", label: "Vice President" },
@@ -326,7 +329,7 @@ const DUMMY_CANDIDATES: Candidate[] = [
 ];
 
 // DUMMY BOOKMARKED CANDIDATES DATA - Added for preview purposes
-const DUMMY_BOOKMARKS: CandidateBookmark[] = [
+const DUMMY_BOOKMARKS = [
   {
     candidateId: "pres-1",
     position: "President",
@@ -437,7 +440,7 @@ export default function MyPicksPage() {
   
   // Use local dummy data instead of fetching from hooks or context
   const [dummyCandidates] = useState<Candidate[]>(DUMMY_CANDIDATES);
-  const [bookmarkedCandidates] = useState<CandidateBookmark[]>(DUMMY_BOOKMARKS);
+  const [bookmarkedCandidates] = useState<CandidateBookmark[]>(DUMMY_BOOKMARKS as any);
   
   // State for selected candidates (limit to 2)
   const [selectedCandidates, setSelectedCandidates] = useState<string[]>([]);
@@ -445,6 +448,15 @@ export default function MyPicksPage() {
   // State for search and filter
   const [searchQuery, setSearchQuery] = useState("");
   const [positionFilter, setPositionFilter] = useState<string>("all");
+  const [partyFilter, setPartyFilter] = useState<string>("all");
+  
+  // Get unique parties for the filter dropdown
+  const getUniqueParties = () => {
+    const parties = dummyCandidates.map(candidate => candidate.party);
+    return ["all", ...Array.from(new Set(parties))];
+  };
+  
+  const uniqueParties = getUniqueParties();
   
   // Function to get candidate by ID
   const getCandidateById = (id: string): Candidate | undefined => {
@@ -470,7 +482,7 @@ export default function MyPicksPage() {
   };
   
   // Helper function for dummy data implementation
-  const getBookmarksByPosition = (position: GovernmentPosition): CandidateBookmark[] => {
+  const getBookmarksByPosition = (position: any): CandidateBookmark[] => {
     return bookmarkedCandidates.filter(bookmark => bookmark.position === position);
   };
   
@@ -478,7 +490,7 @@ export default function MyPicksPage() {
   const getFilteredBookmarksByCategory = () => {
     return POSITION_CATEGORIES
       .map(category => {
-        let positionBookmarks = getBookmarksByPosition(category.position);
+        let positionBookmarks = getBookmarksByPosition(category.position as any);
         
         // Apply position filter if needed
         if (positionFilter !== "all" && positionFilter !== category.position) {
@@ -494,6 +506,13 @@ export default function MyPicksPage() {
               : undefined;
           })
           .filter(Boolean) as (Candidate & { notes: string, dateAdded: string })[];
+        
+        // Apply party filter if needed
+        if (partyFilter !== "all") {
+          candidatesInCategory = candidatesInCategory.filter(
+            candidate => candidate.party === partyFilter
+          );
+        }
         
         // Apply search filter if needed
         if (searchQuery) {
@@ -533,6 +552,13 @@ export default function MyPicksPage() {
     return selectedCandidates.includes(candidateId);
   };
 
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchQuery("");
+    setPositionFilter("all");
+    setPartyFilter("all");
+  };
+
   return (
     <ProtectedRoute>
       <div className="container py-8">
@@ -543,7 +569,7 @@ export default function MyPicksPage() {
           </p>
           
           {/* Search and Filter Bar */}
-          <div className="flex flex-col md:flex-row gap-4 items-center mb-8">
+          <div className="flex flex-wrap gap-4 items-center mb-8">
             <div className="relative w-full md:w-1/3">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -554,6 +580,7 @@ export default function MyPicksPage() {
               />
             </div>
             
+            {/* Position Filter */}
             <div className="w-full md:w-auto">
               <Select value={positionFilter} onValueChange={setPositionFilter}>
                 <SelectTrigger className="w-full md:w-[180px]">
@@ -570,6 +597,36 @@ export default function MyPicksPage() {
                 </SelectContent>
               </Select>
             </div>
+            
+            {/* Party Filter */}
+            <div className="w-full md:w-auto">
+              <Select value={partyFilter} onValueChange={setPartyFilter}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Filter by party" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Parties</SelectItem>
+                  {uniqueParties.filter(party => party !== "all").map(party => (
+                    <SelectItem key={party} value={party}>
+                      {party}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Clear Filters Button */}
+            {(searchQuery || positionFilter !== "all" || partyFilter !== "all") && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={clearFilters}
+                className="h-10"
+              >
+                Clear Filters
+              </Button>
+            )}
             
             {/* Compare Button */}
             {selectedCandidates.length > 0 && (

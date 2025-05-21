@@ -2,12 +2,81 @@
 
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { Search, Filter, X } from "lucide-react";
+import { Search, Filter, X, ArrowRightLeft, Star } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { Badge } from "@/components/common/Badge";
-import { CandidateCard } from "@/components/candidate/CandidateCard";
 import { useCandidates } from "@/context/CandidateContext";
 import { useDebounce } from "@/hooks/useDebounce";
+import Link from "next/link";
+import Image from "next/image";
+import { Card } from "@/components/common/Card";
+import { Candidate } from "@/lib/dummy-data";
+
+// Define the categories to display based on political positions
+const POSITION_CATEGORIES = [
+  "President",
+  "Vice President",
+  "Senator",
+  "Party-list Representative",
+  "District Representative",
+  "Governor",
+  "Vice Governor",
+  "Mayor",
+  "Vice Mayor",
+  "Councilor",
+  "Other"
+];
+
+// Compact Candidate Card component for the grouped layout - matching My Picks exactly
+const CompactCandidateCard = ({ 
+  candidate, 
+  isSelected, 
+  onSelect 
+}: { 
+  candidate: Candidate; 
+  isSelected: boolean; 
+  onSelect: () => void;
+}) => {
+  return (
+    <Link href={`/candidate/${candidate.id}`}>
+      <Card className={`rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden transition-all hover:shadow-md ${isSelected ? 'ring-2 ring-primary' : ''} w-full aspect-[2/3] relative flex flex-col`}>
+        <div 
+          className="absolute top-1 right-1 z-10"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onSelect();
+          }}
+        >
+          <Star 
+            className={`h-3 w-3 cursor-pointer ${isSelected ? 'fill-primary text-primary' : 'text-black'}`}
+          />
+        </div>
+        
+        <div className="relative w-full h-16 overflow-hidden">
+          <Image
+            src={candidate.image || "/placeholder-candidate.jpg"}
+            alt={candidate.name}
+            fill
+            className="object-cover"
+          />
+        </div>
+        
+        <div className="p-1 flex-grow flex flex-col text-[10px]">
+          <h3 className="font-medium truncate">{candidate.name}</h3>
+          <p className="text-muted-foreground truncate">{candidate.party}</p>
+          
+          {/* Key stance highlight */}
+          {Object.entries(candidate.issues)[0] && (
+            <p className="mt-auto line-clamp-1 text-muted-foreground italic">
+              {Object.keys(candidate.issues)[0]}: {Object.values(candidate.issues)[0].stance}
+            </p>
+          )}
+        </div>
+      </Card>
+    </Link>
+  );
+};
 
 export default function CandidatesPage() {
   const searchParams = useSearchParams();
@@ -16,6 +85,9 @@ export default function CandidatesPage() {
     issues, 
     isLoading, 
     filter, 
+    selectedCandidates,
+    selectCandidate,
+    unselectCandidate,
     setSearchTerm, 
     setIssueFilter,
     setPartyFilter,
@@ -47,6 +119,45 @@ export default function CandidatesPage() {
   
   // Toggle sidebar on mobile
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
+  // Group candidates by position
+  const getCandidatesByPosition = () => {
+    const groupedCandidates = {} as Record<string, Candidate[]>;
+    
+    // Initialize categories
+    POSITION_CATEGORIES.forEach(position => {
+      groupedCandidates[position] = [];
+    });
+    
+    // Group candidates
+    filteredCandidates.forEach(candidate => {
+      // Map position to an existing category, or use "Other"
+      const position = POSITION_CATEGORIES.includes(candidate.position) 
+        ? candidate.position
+        : "Other";
+        
+      groupedCandidates[position].push(candidate);
+    });
+    
+    // Filter out empty categories
+    return Object.entries(groupedCandidates)
+      .filter(([_, candidates]) => candidates.length > 0)
+      .map(([position, candidates]) => ({
+        position,
+        candidates
+      }));
+  };
+  
+  const positionGroups = getCandidatesByPosition();
+
+  // Handle candidate selection
+  const handleCandidateSelect = (id: string) => {
+    if (selectedCandidates.includes(id)) {
+      unselectCandidate(id);
+    } else {
+      selectCandidate(id);
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -60,9 +171,9 @@ export default function CandidatesPage() {
           >
             <Filter className="mr-2 h-4 w-4" />
             Filters
-            {(filter.issueFilter || filter.partyFilter) && (
+            {filter.partyFilter && (
               <Badge className="ml-2 h-5 w-5 p-0 flex items-center justify-center">
-                {(filter.issueFilter ? 1 : 0) + (filter.partyFilter ? 1 : 0)}
+                1
               </Badge>
             )}
           </Button>
@@ -78,7 +189,7 @@ export default function CandidatesPage() {
           <div className="p-4 border rounded-lg sticky top-20">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Filters</h2>
-              {(filter.issueFilter || filter.partyFilter) && (
+              {filter.partyFilter && (
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -90,38 +201,8 @@ export default function CandidatesPage() {
               )}
             </div>
             
-            {/* Issue Filter */}
-            <div className="mb-6">
-              <h3 className="text-sm font-medium mb-2">Issues</h3>
-              <div className="space-y-2">
-                {issues.map(issue => (
-                  <div 
-                    key={issue.id} 
-                    className="flex items-center"
-                  >
-                    <input
-                      type="radio"
-                      id={`issue-${issue.id}`}
-                      name="issue"
-                      checked={filter.issueFilter === issue.id}
-                      onChange={() => setIssueFilter(
-                        filter.issueFilter === issue.id ? null : issue.id
-                      )}
-                      className="mr-2"
-                    />
-                    <label 
-                      htmlFor={`issue-${issue.id}`}
-                      className="text-sm cursor-pointer"
-                    >
-                      {issue.title}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
             {/* Party Filter */}
-            <div className="mb-6">
+            <div>
               <h3 className="text-sm font-medium mb-2">Parties</h3>
               <div className="space-y-2">
                 {uniqueParties.map(party => (
@@ -190,35 +271,19 @@ export default function CandidatesPage() {
             </div>
             
             {/* Active Filters */}
-            {(filter.issueFilter || filter.partyFilter) && (
+            {filter.partyFilter && (
               <div className="flex flex-wrap gap-2 mb-4">
-                {filter.issueFilter && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    Issue: {issues.find(i => i.id === filter.issueFilter)?.title}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-4 w-4 ml-1"
-                      onClick={() => setIssueFilter(null)}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </Badge>
-                )}
-                
-                {filter.partyFilter && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    Party: {filter.partyFilter}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-4 w-4 ml-1"
-                      onClick={() => setPartyFilter(null)}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </Badge>
-                )}
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  Party: {filter.partyFilter}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-4 w-4 ml-1"
+                    onClick={() => setPartyFilter(null)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </Badge>
                 
                 <Button
                   variant="ghost"
@@ -227,6 +292,31 @@ export default function CandidatesPage() {
                   onClick={clearFilters}
                 >
                   Clear all
+                </Button>
+              </div>
+            )}
+            
+            {/* Compare Button (if candidates selected) */}
+            {selectedCandidates.length > 0 && (
+              <div className="flex items-center justify-end mb-4">
+                <span className="mr-2 text-sm text-muted-foreground">
+                  {selectedCandidates.length}/2 selected
+                </span>
+                <Button
+                  disabled={selectedCandidates.length < 2}
+                  asChild={selectedCandidates.length === 2}
+                >
+                  {selectedCandidates.length === 2 ? (
+                    <Link href={`/compare?ids=${selectedCandidates.join(',')}`}>
+                      <ArrowRightLeft className="h-4 w-4 mr-2" />
+                      Compare Candidates
+                    </Link>
+                  ) : (
+                    <>
+                      <ArrowRightLeft className="h-4 w-4 mr-2" />
+                      Select 2 to Compare
+                    </>
+                  )}
                 </Button>
               </div>
             )}
@@ -247,12 +337,29 @@ export default function CandidatesPage() {
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredCandidates.map(candidate => (
-                  <CandidateCard
-                    key={candidate.id}
-                    candidate={candidate}
-                  />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {positionGroups.map(group => (
+                  <div key={group.position} className="mb-4">
+                    <div className="mb-2">
+                      <h2 className="text-base font-semibold border-b pb-1">
+                        {group.position}
+                        <span className="text-xs font-normal text-muted-foreground ml-2">
+                          ({group.candidates.length})
+                        </span>
+                      </h2>
+                    </div>
+                    
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                      {group.candidates.map(candidate => (
+                        <CompactCandidateCard
+                          key={candidate.id}
+                          candidate={candidate}
+                          isSelected={selectedCandidates.includes(candidate.id)}
+                          onSelect={() => handleCandidateSelect(candidate.id)}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
