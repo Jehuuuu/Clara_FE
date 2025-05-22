@@ -43,8 +43,8 @@ export default function AskPage() {
             <div className="bg-muted/50 p-4 rounded-lg">
               <p className="font-medium">Candidate Questions</p>
               <ul className="mt-2 space-y-2 text-sm">
-                <li>"Tell me about Alex Johnson's economic policies"</li>
-                <li>"What is Morgan Smith's stance on immigration?"</li>
+                <li>"Tell me about a candidate's economic policies"</li>
+                <li>"What is the current President's stance on immigration?"</li>
                 <li>"Which candidates have experience in healthcare?"</li>
               </ul>
             </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useUI } from "@/context/UIContext";
 import { Button } from "@/components/common/Button";
@@ -10,9 +10,19 @@ export function ProfileForm() {
   const { addToast } = useUI();
   
   const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState(user?.name || "");
-  const [email, setEmail] = useState(user?.email || "");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Initialize form with user data when available
+  useEffect(() => {
+    if (user) {
+      setFirstName(user.firstName || "");
+      setLastName(user.lastName || "");
+      setEmail(user.email || "");
+    }
+  }, [user]);
   
   if (!user) {
     return (
@@ -25,10 +35,10 @@ export function ProfileForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name || !email) {
+    if (!firstName || !email) {
       addToast({
         title: "Error",
-        message: "Please fill in all fields",
+        message: "Please fill in all required fields",
         type: "error"
       });
       return;
@@ -37,15 +47,24 @@ export function ProfileForm() {
     setIsSubmitting(true);
     
     try {
-      updateUser({ name, email });
-      
-      addToast({
-        title: "Success",
-        message: "Profile updated successfully",
-        type: "success"
+      const success = await updateUser({ 
+        firstName, 
+        lastName,
+        name: `${firstName} ${lastName}`.trim(),
+        email 
       });
       
-      setIsEditing(false);
+      if (success) {
+        addToast({
+          title: "Success",
+          message: "Profile updated successfully",
+          type: "success"
+        });
+        
+        setIsEditing(false);
+      } else {
+        throw new Error("Failed to update profile");
+      }
     } catch (error) {
       addToast({
         title: "Error",
@@ -67,18 +86,34 @@ export function ProfileForm() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label 
-              htmlFor="name" 
+              htmlFor="firstName" 
               className="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              Full Name
+              First Name
             </label>
             <input
-              id="name"
+              id="firstName"
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
               className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
               required
+            />
+          </div>
+          
+          <div>
+            <label 
+              htmlFor="lastName" 
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Last Name
+            </label>
+            <input
+              id="lastName"
+              type="text"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
             />
           </div>
           
@@ -111,7 +146,8 @@ export function ProfileForm() {
               variant="outline"
               onClick={() => {
                 setIsEditing(false);
-                setName(user.name);
+                setFirstName(user.firstName || "");
+                setLastName(user.lastName || "");
                 setEmail(user.email);
               }}
             >
@@ -123,12 +159,19 @@ export function ProfileForm() {
         <div className="space-y-4">
           <div>
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Name</h3>
-            <p className="mt-1 text-sm text-gray-900 dark:text-gray-200">{user.name}</p>
+            <p className="mt-1 text-sm text-gray-900 dark:text-gray-200">
+              {user.firstName} {user.lastName}
+            </p>
           </div>
           
           <div>
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Email</h3>
             <p className="mt-1 text-sm text-gray-900 dark:text-gray-200">{user.email}</p>
+          </div>
+          
+          <div>
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Username</h3>
+            <p className="mt-1 text-sm text-gray-900 dark:text-gray-200">{user.username}</p>
           </div>
           
           <div>
