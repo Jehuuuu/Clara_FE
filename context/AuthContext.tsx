@@ -3,6 +3,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { loginUser, registerUser } from "@/lib/api/auth";
+import axios from "axios";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"; // adjust as needed
 
 // Define user type
 export interface User {
@@ -11,6 +13,8 @@ export interface User {
   first_name: string;
   last_name: string;
   savedPicks: string[]; // IDs of saved candidates
+  token?: string; // JWT token for API authentication
+  refreshToken?: string; // JWT refresh token
 }
 
 
@@ -63,6 +67,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  // Get authentication token
+  const getToken = async (): Promise<string | null> => {
+    if (!user?.token) return null;
+
+    // Check if token needs refreshing
+    try {
+      // Verify the current token
+      await axios.post(`${API_URL}/auth/token/verify/`, {
+        token: user.token
+      });
+      
+      // Token is valid, return it
+      return user.token;
+    } catch (error) {
+      // Token is invalid, try to refresh it
+      console.log("Token invalid, attempting to refresh...");
+      
+      try {
+        if (user.refreshToken) {
+          const response = await axios.post(`${API_URL}/auth/token/refresh/`, {
+            refresh: user.refreshToken
+          });
+          
+          // Update the access token
+          const newToken = response.data.access;
+          setUser(prev => prev ? { ...prev, token: newToken } : null);
+          
+          return newToken;
+        }
+      } catch (refreshError) {
+        // Refresh failed, logout the user
+        console.error("Token refresh failed", refreshError);
+        await logout();
+      }
+    }
+    
+    return null;
+  };
+
   // Login function
   const login = async (
     username: string,
@@ -70,14 +113,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ): Promise<{ success: boolean; message: string }> => {
     setIsLoading(true);
     try {
-      const result = await loginUser(username, password);
+      const result = await loginUser(username, password); // result should return { success, user, tokens }
+
       setIsLoading(false);
 
-      if (result.success && result.user) {
+      if (result.success && result.user && result.tokens) {
+        const { user, tokens } = result;
+
         setUser({
-          ...result.user,
-          savedPicks: [], // Set to empty initially; update later if needed
+          ...user,
+          savedPicks: [], // optional
+          token: tokens.access,
+          refreshToken: tokens.refresh,
         });
+
+        localStorage.setItem("clara_user", JSON.stringify({
+          ...user,
+          savedPicks: [],
+          token: tokens.access,
+          refreshToken: tokens.refresh,
+        }));
 
         return { success: true, message: "Login successful" };
       } else {
@@ -88,6 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, message: error.message || "Login failed" };
     }
   };
+
 
 
   // Register function

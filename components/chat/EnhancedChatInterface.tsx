@@ -7,7 +7,6 @@ import { Button } from "@/components/common/Button";
 import { Card } from "@/components/common/Card";
 import { useChat, Message } from "@/context/ChatContext";
 import { useAuth } from "@/context/AuthContext";
-import { candidates } from "@/lib/dummy-data";
 import Link from "next/link";
 
 // Modal component for politician selection
@@ -120,7 +119,7 @@ function ResearchLoadingIndicator() {
 
 export function EnhancedChatInterface() {
   const { user } = useAuth();
-  const { currentChat, createChat, addMessageToCurrentChat, clearCurrentChat } = useChat();
+  const { currentChat, createChat, addMessageToCurrentChat, clearCurrentChat, updateChat, setCurrentChat } = useChat();
   
   // Chat states
   const [input, setInput] = useState("");
@@ -138,6 +137,20 @@ export function EnhancedChatInterface() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
+  // Helper to get chat title
+  const getChatTitle = () => {
+    if (selectedPolitician) {
+      const base = selectedPolitician.position
+        ? `${selectedPolitician.name} (${selectedPolitician.position})`
+        : selectedPolitician.name;
+      return base;
+    }
+    if (currentChat) {
+      return currentChat.title;
+    }
+    return "Politician Research";
+  };
+
   // Auto-scroll to bottom of messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -149,6 +162,24 @@ export function EnhancedChatInterface() {
       inputRef.current?.focus();
     }
   }, [chatStarted, isResearching, currentChat, guestMessages]);
+
+  // When a chat is selected from the sidebar, update selectedPolitician and chatStarted
+  useEffect(() => {
+    if (currentChat) {
+      // If the chat has messages, set chatStarted to true
+      if (currentChat.messages && currentChat.messages.length > 0) {
+        setChatStarted(true);
+      }
+      // Try to parse name and position from title
+      if (currentChat.title && currentChat.title.includes("(")) {
+        const match = currentChat.title.match(/^(.*) \((.*)\)$/);
+        if (match) {
+          setSelectedPolitician({ name: match[1], position: match[2] });
+          setIsResearching(false);
+        }
+      }
+    }
+  }, [currentChat]);
 
   const handleStartChat = () => {
     setShowModal(true);
@@ -167,52 +198,36 @@ export function EnhancedChatInterface() {
     }, 3000);
   };
 
+  // Helper to create a new chat with the correct title
+  const createResearchChat = (politician: {name: string, position: string}, initialMessage: string) => {
+    const title = politician.position
+      ? `${politician.name} (${politician.position})`
+      : politician.name;
+    createChat();
+    setTimeout(() => {
+      updateChat && currentChat && updateChat(currentChat.id, { title });
+      addMessageToCurrentChat({
+        content: initialMessage,
+        role: "assistant",
+        timestamp: new Date()
+      });
+    }, 100);
+  };
+
   const generateInitialReport = (politician: {name: string, position: string}) => {
-    const reportContent = `
-# Research Report: ${politician.name}${politician.position ? ` (${politician.position})` : ''}
+    const reportContent = `\n# Research Report: ${politician.name}${politician.position ? ` (${politician.position})` : ''}\n\n## Searching for information...\n\nI'm now connected to the backend research service to find information about ${politician.name}.\n\nTo learn more about this candidate, you can ask specific questions about their:\n- Background and education\n- Political positions and policies\n- Voting record\n- Campaign platforms\n- Recent activities\n\nWhat would you like to know about ${politician.name}?\n`;
 
-## Background
-${politician.name} is a ${politician.position || "politician"} with a background in public service. Based on public records, they have been involved in politics for several years.
-
-## Key Policy Positions
-- **Economy**: Supports economic growth initiatives and job creation programs
-- **Healthcare**: Advocates for affordable healthcare access
-- **Education**: Prioritizes educational reform and funding
-- **Environment**: Endorses sustainable development and conservation efforts
-
-## Recent Activities
-Recently, ${politician.name} has been focusing on community engagement and policy development.
-
-## How can I help you learn more about ${politician.name}?
-`;
-
-    // Add report to appropriate chat storage
     if (user) {
       // For authenticated users
       if (!currentChat) {
-        // Create a new chat with title based on the politician's name
-        const newChat = {
-          title: `Research: ${politician.name}`,
-          messages: [{
-            content: reportContent,
-            role: "assistant",
-            timestamp: new Date()
-          }]
-        };
-        
-        // Create the chat first, then add the initial message
-        createChat();
-        
-        // Use setTimeout to ensure chat creation is complete before adding message
-        setTimeout(() => {
-          addMessageToCurrentChat({
-            content: reportContent,
-            role: "assistant",
-            timestamp: new Date()
-          });
-        }, 100);
+        // Create a new chat with title based on the politician's name and position
+        createResearchChat(politician, reportContent);
       } else {
-        // Add to existing chat
+        // Update chat title if needed
+        const title = politician.position
+          ? `${politician.name} (${politician.position})`
+          : politician.name;
+        updateChat(currentChat.id, { title });
         addMessageToCurrentChat({
           content: reportContent,
           role: "assistant",
@@ -235,14 +250,20 @@ Recently, ${politician.name} has been focusing on community engagement and polic
     if (!input.trim() || isLoading || !chatStarted || isResearching) return;
     
     if (user && currentChat) {
-      // Authenticated user - add to saved chats
+      // Authenticated user - add user message to saved chats
       const userMessage: Omit<Message, "id"> = {
         content: input,
         role: "user",
         timestamp: new Date()
       };
-      
       addMessageToCurrentChat(userMessage);
+      setIsLoading(true);
+      setInput("");
+      // Simulate assistant response
+      setTimeout(() => {
+        generateResponse(input);
+        setIsLoading(false);
+      }, 1000);
     } else {
       // Guest user - use local state only
       const userMessage: Message = {
@@ -251,35 +272,29 @@ Recently, ${politician.name} has been focusing on community engagement and polic
         role: "user",
         timestamp: new Date()
       };
-      
       setGuestMessages(prev => [...prev, userMessage]);
+      setIsLoading(true);
+      setInput("");
+      setTimeout(() => {
+        generateResponse(input);
+        setIsLoading(false);
+      }, 1000);
     }
-    
-    setInput("");
-    setIsLoading(true);
-    
-    // Process the message to generate response
-    setTimeout(() => {
-      generateResponse(input);
-      setIsLoading(false);
-    }, 1000);
   };
   
   const generateResponse = (question: string) => {
     if (!selectedPolitician) return;
     
-    // Generate AI response about the politician
-    const responseContent = `Based on available information about ${selectedPolitician.name}, I can tell you that ${question.includes("economy") ? "they have supported economic development initiatives and job creation programs" : question.includes("healthcare") ? "they have advocated for expanding healthcare access and affordability" : question.includes("education") ? "they have championed education reform and increased funding for schools" : "they have been active in public service and focused on community needs"}. Would you like to know more about any specific aspect of their policy positions or background?`;
+    // Generate response about needing to connect to the API
+    const responseContent = `I need to connect to the research API to provide accurate information about ${selectedPolitician.name}. \n\nWhen the backend API integration is complete, I'll be able to search for specific information about their positions on ${question.includes("economy") ? "economic policies" : question.includes("healthcare") ? "healthcare reform" : question.includes("education") ? "education initiatives" : "various political issues"}.\n\nWould you like me to look up something else about this politician?`;
     
-    // Add assistant response based on user type
     if (user && currentChat) {
-      // Authenticated user - add to saved chats
+      // Authenticated user - add assistant response to saved chats
       const assistantMessage: Omit<Message, "id"> = {
         content: responseContent,
         role: "assistant",
         timestamp: new Date()
       };
-      
       addMessageToCurrentChat(assistantMessage);
     } else {
       // Guest user - use local state only
@@ -289,7 +304,6 @@ Recently, ${politician.name} has been focusing on community engagement and polic
         role: "assistant",
         timestamp: new Date()
       };
-      
       setGuestMessages(prev => [...prev, assistantMessage]);
     }
   };
@@ -299,7 +313,6 @@ Recently, ${politician.name} has been focusing on community engagement and polic
     setChatStarted(false);
     setIsResearching(false);
     setSelectedPolitician(null);
-    
     if (user) {
       clearCurrentChat();
     } else {
@@ -318,15 +331,11 @@ Recently, ${politician.name} has been focusing on community engagement and polic
       )}
       
       <div className="p-4 border-b flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-medium">
-            {chatStarted 
-              ? selectedPolitician 
-                ? `Research: ${selectedPolitician.name}`
-                : "Researching..." 
-              : "Politician Research"}
+        <div className="min-w-0">
+          <h2 className="text-lg font-medium truncate" title={getChatTitle()}>
+            {getChatTitle()}
           </h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground truncate">
             {chatStarted
               ? "Ask questions about this politician's positions and background"
               : "Start researching a politician to learn more"}
@@ -347,7 +356,20 @@ Recently, ${politician.name} has been focusing on community engagement and polic
       </div>
       
       <div className="flex-1 p-4 overflow-y-auto">
-        {!chatStarted ? (
+        {/* Show chat history if currentChat exists and has messages */}
+        {user && currentChat && currentChat.messages && currentChat.messages.length > 0 ? (
+          <>
+            {currentChat.messages.map((message, idx) => (
+              <ChatMessageComponent
+                key={`${message.id || idx}`}
+                content={message.content}
+                role={message.role}
+                timestamp={message.timestamp}
+              />
+            ))}
+            <div ref={messagesEndRef} />
+          </>
+        ) : !chatStarted ? (
           <div className="h-full flex flex-col items-center justify-center">
             <FileSearch className="h-16 w-16 mb-4 text-primary/50" />
             <h3 className="text-xl font-semibold mb-2">Start Your Research</h3>
@@ -370,36 +392,24 @@ Recently, ${politician.name} has been focusing on community engagement and polic
         ) : isResearching ? (
           <ResearchLoadingIndicator />
         ) : (
+          // Guest user chat history
           <>
-            {user && currentChat ? (
-              // Authenticated user - use saved messages
-              currentChat.messages.map((message, idx) => (
-                <ChatMessageComponent
-                  key={`${message.id}-${idx}`}
-                  content={message.content}
-                  role={message.role}
-                  timestamp={message.timestamp}
-                />
-              ))
-            ) : (
-              // Guest user - use local state
-              guestMessages.map((message, idx) => (
-                <ChatMessageComponent
-                  key={`${message.id}-${idx}`}
-                  content={message.content}
-                  role={message.role}
-                  timestamp={message.timestamp}
-                />
-              ))
-            )}
+            {guestMessages.map((message, idx) => (
+              <ChatMessageComponent
+                key={`${message.id}-${idx}`}
+                content={message.content}
+                role={message.role}
+                timestamp={message.timestamp}
+              />
+            ))}
+            <div ref={messagesEndRef} />
           </>
         )}
-        
-        <div ref={messagesEndRef} />
       </div>
       
       <div className="p-4 border-t mt-auto">
-        {chatStarted && !isResearching ? (
+        {/* Show input if a chat is selected or started */}
+        {(chatStarted || (user && currentChat)) && !isResearching ? (
           <form onSubmit={handleSubmit} className="flex items-center gap-2">
             <input
               ref={inputRef}

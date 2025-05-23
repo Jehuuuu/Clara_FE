@@ -2,6 +2,9 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
+import axios from "axios";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
 export interface Message {
   id: string;
@@ -28,122 +31,55 @@ interface ChatContextType {
   setCurrentChat: (chatId: string | null) => void;
   addMessageToCurrentChat: (message: Omit<Message, "id">) => void;
   clearCurrentChat: () => void;
+  clearAllChats: () => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
-// Generate a mock chat for demonstration
-const generateMockChat = (id: string, title: string, messageCount: number = 3): Chat => {
-  const messages: Message[] = [];
-  const createdAt = new Date();
-  createdAt.setDate(createdAt.getDate() - Math.floor(Math.random() * 10));
-
-  // First message is always from user
-  messages.push({
-    id: `${id}-msg-1`,
-    content: "Hi Clara, can you tell me about the election?",
-    role: "user",
-    timestamp: new Date(createdAt.getTime() + 1000)
-  });
-
-  // Add assistant response
-  messages.push({
-    id: `${id}-msg-2`,
-    content: "Hello! I'd be happy to help with information about the upcoming election. What specific aspects are you interested in learning about?",
-    role: "assistant",
-    timestamp: new Date(createdAt.getTime() + 5000)
-  });
-
-  // Add additional message pairs if requested
-  if (messageCount > 2) {
-    const topics = [
-      "candidates", 
-      "voting process", 
-      "key issues", 
-      "election timeline", 
-      "debate schedule"
-    ];
-    
-    for (let i = 3; i <= messageCount; i += 2) {
-      const topicIndex = Math.floor(Math.random() * topics.length);
-      
-      messages.push({
-        id: `${id}-msg-${i}`,
-        content: `I'd like to know more about the ${topics[topicIndex]}.`,
-        role: "user",
-        timestamp: new Date(createdAt.getTime() + (i * 10000))
-      });
-      
-      if (i + 1 <= messageCount) {
-        messages.push({
-          id: `${id}-msg-${i + 1}`,
-          content: `Here's some information about the ${topics[topicIndex]}...`,
-          role: "assistant",
-          timestamp: new Date(createdAt.getTime() + ((i + 1) * 10000))
-        });
-      }
-    }
-  }
-
-  return {
-    id,
-    title,
-    messages,
-    createdAt,
-    updatedAt: new Date(createdAt.getTime() + (messageCount * 10000))
-  };
-};
-
-const generateMockChats = (): Chat[] => {
-  return [
-    generateMockChat("chat-1", "Election Information", 6),
-    generateMockChat("chat-2", "Healthcare Policies", 4),
-    generateMockChat("chat-3", "Environmental Issues", 8),
-    generateMockChat("chat-4", "Economic Platforms", 4),
-    generateMockChat("chat-5", "Voter Registration", 2)
-  ];
-};
-
 export function ChatProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, getToken } = useAuth();
   const [chats, setChats] = useState<Chat[]>([]);
   const [currentChat, setCurrentChatState] = useState<Chat | null>(null);
   const [isLoadingChats, setIsLoadingChats] = useState(true);
 
-  // Load chats from local storage or initialize with mock data when user is authenticated
+  // Helper function to convert API dates to Date objects
+  const formatDates = (chat: any): Chat => ({
+    ...chat,
+    id: chat.id.toString(),
+    createdAt: new Date(chat.created_at),
+    updatedAt: new Date(chat.updated_at),
+    messages: chat.messages?.map((msg: any) => ({
+      ...msg,
+      id: msg.id.toString(),
+      timestamp: new Date(msg.timestamp)
+    })) || []
+  });
+
+  // Helper function to get authorization header
+  const getAuthHeader = async () => {
+    const token = await getToken();
+    return {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    };
+  };
+
+  // Load chats from API when user is authenticated
   useEffect(() => {
     const loadChats = async () => {
       setIsLoadingChats(true);
       
       if (user) {
-        // Try to get saved chats from localStorage
-        const savedChats = localStorage.getItem(`clara_chats_${user.id}`);
-        
-        if (savedChats) {
-          try {
-            const parsedChats = JSON.parse(savedChats);
-            // Convert string dates back to Date objects
-            const formattedChats = parsedChats.map((chat: any) => ({
-              ...chat,
-              createdAt: new Date(chat.createdAt),
-              updatedAt: new Date(chat.updatedAt),
-              messages: chat.messages.map((msg: any) => ({
-                ...msg,
-                timestamp: new Date(msg.timestamp)
-              }))
-            }));
-            setChats(formattedChats);
-          } catch (error) {
-            console.error("Failed to parse saved chats", error);
-            const mockChats = generateMockChats();
-            setChats(mockChats);
-            saveChatsToStorage(mockChats);
-          }
-        } else {
-          // If no saved chats, use mock data
-          const mockChats = generateMockChats();
-          setChats(mockChats);
-          saveChatsToStorage(mockChats);
+        try {
+          const authHeader = await getAuthHeader();
+          const response = await axios.get(`${API_URL}/chats/`, authHeader);
+          
+          const formattedChats = response.data.map(formatDates);
+          setChats(formattedChats);
+        } catch (error) {
+          console.error("Failed to fetch chats", error);
+          setChats([]);
         }
       } else {
         // No user logged in, clear chats
@@ -156,87 +92,91 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     loadChats();
   }, [user]);
   
-  // Save chats to localStorage when they change
-  const saveChatsToStorage = (currentChats: Chat[]) => {
-    if (user) {
-      localStorage.setItem(`clara_chats_${user.id}`, JSON.stringify(currentChats));
-    }
-  };
-  
-  useEffect(() => {
-    if (chats.length > 0 && user) {
-      saveChatsToStorage(chats);
-    }
-  }, [chats, user]);
-  
   // Create a new chat
-  const createChat = () => {
+  const createChat = async () => {
     // Only allow authenticated users to create persistent chats
     if (!user) {
       console.log("Guest users cannot create persistent chats");
       return;
     }
     
-    const newChat: Chat = {
-      id: `chat-${Date.now()}`,
-      title: "New Conversation",
-      messages: [{
-        id: `welcome-${Date.now()}`,
-        content: "Hello! I'm Clara, your election assistant. Ask me about candidates, issues, or policies, and I'll help you find information.",
-        role: "assistant",
-        timestamp: new Date()
-      }],
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    
-    setChats(prev => [newChat, ...prev]);
-    setCurrentChatState(newChat);
+    try {
+      const authHeader = await getAuthHeader();
+      const response = await axios.post(
+        `${API_URL}/chats/`, 
+        {
+          title: "New Conversation",
+          welcome_message: "Hello! I'm Clara, your election assistant. Ask me about candidates, issues, or policies, and I'll help you find information."
+        },
+        authHeader
+      );
+      
+      const newChat = formatDates(response.data);
+      setChats(prev => [newChat, ...prev]);
+      setCurrentChatState(newChat);
+    } catch (error) {
+      console.error("Failed to create chat", error);
+    }
   };
   
   // Update a chat
-  const updateChat = (chatId: string, updates: Partial<Omit<Chat, "id">>) => {
+  const updateChat = async (chatId: string, updates: Partial<Omit<Chat, "id">>) => {
     // Only allow authenticated users to update chats
     if (!user) {
       console.log("Guest users cannot update persistent chats");
       return;
     }
     
-    setChats(prev => {
-      const updatedChats = prev.map(chat => 
-        chat.id === chatId 
-          ? { ...chat, ...updates, updatedAt: new Date() } 
-          : chat
+    try {
+      const authHeader = await getAuthHeader();
+      const response = await axios.put(
+        `${API_URL}/chats/${chatId}/`,
+        {
+          title: updates.title
+        },
+        authHeader
       );
-      return updatedChats;
-    });
-    
-    // If current chat is being updated, update it as well
-    if (currentChat?.id === chatId) {
-      setCurrentChatState(prev => 
-        prev ? { ...prev, ...updates, updatedAt: new Date() } : null
-      );
+      
+      const updatedChat = formatDates(response.data);
+      
+      setChats(prev => prev.map(chat => 
+        chat.id === chatId ? updatedChat : chat
+      ));
+      
+      // If current chat is being updated, update it as well
+      if (currentChat?.id === chatId) {
+        setCurrentChatState(updatedChat);
+      }
+    } catch (error) {
+      console.error("Failed to update chat", error);
     }
   };
   
   // Delete a chat
-  const deleteChat = (chatId: string) => {
+  const deleteChat = async (chatId: string) => {
     // Only allow authenticated users to delete chats
     if (!user) {
       console.log("Guest users cannot delete persistent chats");
       return;
     }
     
-    setChats(prev => prev.filter(chat => chat.id !== chatId));
-    
-    // If current chat is being deleted, clear current chat
-    if (currentChat?.id === chatId) {
-      setCurrentChatState(null);
+    try {
+      const authHeader = await getAuthHeader();
+      await axios.delete(`${API_URL}/chats/${chatId}/`, authHeader);
+      
+      setChats(prev => prev.filter(chat => chat.id !== chatId));
+      
+      // If current chat is being deleted, clear current chat
+      if (currentChat?.id === chatId) {
+        setCurrentChatState(null);
+      }
+    } catch (error) {
+      console.error("Failed to delete chat", error);
     }
   };
   
   // Set current chat
-  const setCurrentChat = (chatId: string | null) => {
+  const setCurrentChat = async (chatId: string | null) => {
     // Only allow authenticated users to switch between saved chats
     if (!user) {
       console.log("Guest users cannot switch between persistent chats");
@@ -248,46 +188,60 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       return;
     }
     
-    const chat = chats.find(c => c.id === chatId) || null;
-    setCurrentChatState(chat);
+    try {
+      const authHeader = await getAuthHeader();
+      const response = await axios.get(`${API_URL}/chats/${chatId}/`, authHeader);
+      const chat = formatDates(response.data);
+      setCurrentChatState(chat);
+    } catch (error) {
+      console.error("Failed to fetch chat details", error);
+    }
   };
   
   // Add message to current chat
-  const addMessageToCurrentChat = (message: Omit<Message, "id">) => {
+  const addMessageToCurrentChat = async (message: Omit<Message, "id">) => {
     // Only allow authenticated users to add messages to persistent chats
     if (!user || !currentChat) {
       console.log("Guest users cannot add messages to persistent chats");
       return;
     }
     
-    const newMessage: Message = {
-      ...message,
-      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    };
-    
-    // Update the current chat
-    const updatedChat: Chat = {
-      ...currentChat,
-      messages: [...currentChat.messages, newMessage],
-      updatedAt: new Date()
-    };
-    
-    // Update the title if this is the first user message
-    let updatedTitle = updatedChat.title;
-    if (updatedChat.title === "New Conversation" && message.role === "user") {
-      // Use the first ~25 chars of the first user message as the chat title
-      updatedTitle = message.content.substring(0, 25) + (message.content.length > 25 ? "..." : "");
-      updatedChat.title = updatedTitle;
+    try {
+      const authHeader = await getAuthHeader();
+      const response = await axios.post(
+        `${API_URL}/chats/${currentChat.id}/messages/`,
+        {
+          content: message.content,
+          role: message.role
+        },
+        authHeader
+      );
+      
+      // Optimistically update the UI
+      const newMessage = {
+        id: response.data.id.toString(),
+        content: message.content,
+        role: message.role,
+        timestamp: new Date(response.data.timestamp)
+      };
+      
+      const updatedChat = {
+        ...currentChat,
+        messages: [...currentChat.messages, newMessage],
+        updatedAt: new Date()
+      };
+      
+      setCurrentChatState(updatedChat);
+      
+      // Update the chat in the chats array
+      setChats(prev => 
+        prev.map(chat => 
+          chat.id === currentChat.id ? updatedChat : chat
+        )
+      );
+    } catch (error) {
+      console.error("Failed to add message", error);
     }
-    
-    setCurrentChatState(updatedChat);
-    
-    // Update the chat in the chats array
-    setChats(prev => 
-      prev.map(chat => 
-        chat.id === currentChat.id ? updatedChat : chat
-      )
-    );
   };
   
   // Clear current chat
@@ -301,6 +255,22 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setCurrentChatState(null);
   };
   
+  // Clear all chats from storage and state
+  const clearAllChats = async () => {
+    if (user) {
+      try {
+        const authHeader = await getAuthHeader();
+        await axios.delete(`${API_URL}/chats/clear/`, authHeader);
+        
+        // Clear from state
+        setChats([]);
+        setCurrentChatState(null);
+      } catch (error) {
+        console.error("Failed to clear all chats", error);
+      }
+    }
+  };
+  
   return (
     <ChatContext.Provider
       value={{
@@ -312,7 +282,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         deleteChat,
         setCurrentChat,
         addMessageToCurrentChat,
-        clearCurrentChat
+        clearCurrentChat,
+        clearAllChats
       }}
     >
       {children}
