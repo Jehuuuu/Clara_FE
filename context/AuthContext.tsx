@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { registerUser } from "@/lib/api/auth";
+import { loginUser, registerUser } from "@/lib/api/auth";
 
 // Define user type
 export interface User {
@@ -34,18 +34,6 @@ interface AuthContextType {
 // Create context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock users for demo purposes (replace with API calls in production)
-const MOCK_USERS: User[] = [
-  {
-    id: "1",
-    username: "demouser",
-    first_name: "Demo",
-    last_name: "User",
-    savedPicks: ["1", "3"],
-  },
-];
-
-
 // Auth provider component
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -76,29 +64,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   // Login function
-  const login = async (username: string, password: string): Promise<{ success: boolean; message: string }> => {
-    // Mock login (replace with actual API call)
+  const login = async (
+    username: string,
+    password: string
+  ): Promise<{ success: boolean; message: string }> => {
     setIsLoading(true);
-    
     try {
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const foundUser = MOCK_USERS.find(u => u.username === username);
-      
-      if (foundUser && password === "password") { // Simplified for demo
-        setUser(foundUser);
-        setIsLoading(false);
+      const result = await loginUser(username, password);
+      setIsLoading(false);
+
+      if (result.success && result.user) {
+        setUser({
+          ...result.user,
+          savedPicks: [], // Set to empty initially; update later if needed
+        });
+
         return { success: true, message: "Login successful" };
       } else {
-        setIsLoading(false);
-        return { success: false, message: "Invalid email or password" };
+        return { success: false, message: result.message };
       }
-    } catch (error) {
+    } catch (error: any) {
       setIsLoading(false);
-      return { success: false, message: "An error occurred during login" };
+      return { success: false, message: error.message || "Login failed" };
     }
   };
+
 
   // Register function
   const register = async (
