@@ -12,15 +12,12 @@ export function ProfileForm() {
   const [isEditing, setIsEditing] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Initialize form with user data when available
   useEffect(() => {
     if (user) {
-      setFirstName(user.firstName || "");
-      setLastName(user.lastName || "");
-      setEmail(user.email || "");
+      setFirstName(user.first_name || "");
+      setLastName(user.last_name || "");
     }
   }, [user]);
   
@@ -35,7 +32,7 @@ export function ProfileForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!firstName || !email) {
+    if (!firstName || !lastName) {
       addToast({
         title: "Error",
         message: "Please fill in all required fields",
@@ -47,24 +44,18 @@ export function ProfileForm() {
     setIsSubmitting(true);
     
     try {
-      const success = await updateUser({ 
-        firstName, 
-        lastName,
-        name: `${firstName} ${lastName}`.trim(),
-        email 
+      await updateUser({ 
+        first_name: firstName, 
+        last_name: lastName,
       });
-      
-      if (success) {
-        addToast({
-          title: "Success",
-          message: "Profile updated successfully",
-          type: "success"
-        });
-        
-        setIsEditing(false);
-      } else {
-        throw new Error("Failed to update profile");
-      }
+
+      addToast({
+        title: "Success",
+        message: "Profile updated successfully",
+        type: "success"
+      });
+
+      setIsEditing(false);
     } catch (error) {
       addToast({
         title: "Error",
@@ -117,23 +108,6 @@ export function ProfileForm() {
             />
           </div>
           
-          <div>
-            <label 
-              htmlFor="email" 
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-              required
-            />
-          </div>
-          
           <div className="flex space-x-2">
             <Button
               type="submit"
@@ -146,9 +120,8 @@ export function ProfileForm() {
               variant="outline"
               onClick={() => {
                 setIsEditing(false);
-                setFirstName(user.firstName || "");
-                setLastName(user.lastName || "");
-                setEmail(user.email);
+                setFirstName(user.first_name || "");
+                setLastName(user.last_name || "");
               }}
             >
               Cancel
@@ -160,13 +133,8 @@ export function ProfileForm() {
           <div>
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Name</h3>
             <p className="mt-1 text-sm text-gray-900 dark:text-gray-200">
-              {user.firstName} {user.lastName}
+              {user.first_name} {user.last_name}
             </p>
-          </div>
-          
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Email</h3>
-            <p className="mt-1 text-sm text-gray-900 dark:text-gray-200">{user.email}</p>
           </div>
           
           <div>
@@ -182,15 +150,10 @@ export function ProfileForm() {
           </div>
           
           <div className="flex space-x-2 pt-4">
-            <Button
-              onClick={() => setIsEditing(true)}
-            >
+            <Button onClick={() => setIsEditing(true)}>
               Edit Profile
             </Button>
-            <Button
-              variant="outline"
-              onClick={logout}
-            >
+            <Button variant="outline" onClick={logout}>
               Log Out
             </Button>
           </div>
@@ -198,4 +161,4 @@ export function ProfileForm() {
       )}
     </div>
   );
-} 
+}
