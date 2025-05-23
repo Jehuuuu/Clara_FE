@@ -2,25 +2,34 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { registerUser } from "@/lib/api/auth";
 
 // Define user type
 export interface User {
   id: string;
-  email: string;
-  name: string;
+  username: string;
+  first_name: string;
+  last_name: string;
   savedPicks: string[]; // IDs of saved candidates
 }
+
 
 // Define auth context type
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
-  register: (name: string, email: string, password: string) => Promise<{ success: boolean; message: string }>;
+  login: (username: string, password: string) => Promise<{ success: boolean; message: string }>;
+  register: (
+    first_name: string,
+    last_name: string,
+    username: string,
+    password: string
+  ) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
 }
+
 
 // Create context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,11 +38,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const MOCK_USERS: User[] = [
   {
     id: "1",
-    email: "user@example.com",
-    name: "Demo User",
-    savedPicks: ["1", "3"]
-  }
+    username: "demouser",
+    first_name: "Demo",
+    last_name: "User",
+    savedPicks: ["1", "3"],
+  },
 ];
+
 
 // Auth provider component
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -65,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   // Login function
-  const login = async (email: string, password: string): Promise<{ success: boolean; message: string }> => {
+  const login = async (username: string, password: string): Promise<{ success: boolean; message: string }> => {
     // Mock login (replace with actual API call)
     setIsLoading(true);
     
@@ -73,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const foundUser = MOCK_USERS.find(u => u.email === email);
+      const foundUser = MOCK_USERS.find(u => u.username === username);
       
       if (foundUser && password === "password") { // Simplified for demo
         setUser(foundUser);
@@ -90,37 +101,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // Register function
-  const register = async (name: string, email: string, password: string): Promise<{ success: boolean; message: string }> => {
-    setIsLoading(true);
-    
+  const register = async (
+    first_name: string,
+    last_name: string,
+    username: string,
+    password: string
+  ): Promise<{ success: boolean; message: string }> => {
     try {
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Check if user already exists
-      if (MOCK_USERS.some(u => u.email === email)) {
-        setIsLoading(false);
-        return { success: false, message: "Email already in use" };
-      }
-      
-      // Create new user (in a real app, this would be an API call)
-      const newUser: User = {
-        id: Math.random().toString(36).substring(2, 9),
-        email,
-        name,
-        savedPicks: []
-      };
-      
-      // Add to mock users (this is just for demo)
-      MOCK_USERS.push(newUser);
-      
-      // Set user in state
-      setUser(newUser);
-      setIsLoading(false);
+      const data = await registerUser({ first_name, last_name, username, password });
+
+      setUser({
+        id: data.user.id.toString(), // Ensure this matches your expected User shape
+        username: data.user.username,
+        first_name: data.user.first_name,
+        last_name: data.user.last_name,
+        savedPicks: [],
+      });
+
+      // Store tokens if needed
+      localStorage.setItem("accessToken", data.tokens.access);
+      localStorage.setItem("refreshToken", data.tokens.refresh);
+
       return { success: true, message: "Registration successful" };
-    } catch (error) {
-      setIsLoading(false);
-      return { success: false, message: "An error occurred during registration" };
+    } catch (error: any) {
+      return { success: false, message: error.message || "Registration failed" };
     }
   };
 
