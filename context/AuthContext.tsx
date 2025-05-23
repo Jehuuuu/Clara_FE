@@ -3,6 +3,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { loginUser, registerUser } from "@/lib/api/auth";
+import axios from "axios";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"; // adjust as needed
 
 // Define user type
 export interface User {
@@ -111,14 +113,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ): Promise<{ success: boolean; message: string }> => {
     setIsLoading(true);
     try {
-      const result = await loginUser(username, password);
+      const result = await loginUser(username, password); // result should return { success, user, tokens }
+
       setIsLoading(false);
 
-      if (result.success && result.user) {
+      if (result.success && result.user && result.tokens) {
+        const { user, tokens } = result;
+
         setUser({
-          ...result.user,
-          savedPicks: [], // Set to empty initially; update later if needed
+          ...user,
+          savedPicks: [], // optional
+          token: tokens.access,
+          refreshToken: tokens.refresh,
         });
+
+        localStorage.setItem("clara_user", JSON.stringify({
+          ...user,
+          savedPicks: [],
+          token: tokens.access,
+          refreshToken: tokens.refresh,
+        }));
 
         return { success: true, message: "Login successful" };
       } else {
@@ -129,6 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, message: error.message || "Login failed" };
     }
   };
+
 
 
   // Register function
