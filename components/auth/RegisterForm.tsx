@@ -8,8 +8,9 @@ import { useUI } from "@/context/UIContext";
 import { Button } from "@/components/common/Button";
 
 export function RegisterForm() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,11 +22,11 @@ export function RegisterForm() {
     e.preventDefault();
     
     // Validate inputs
-    if (!name || !email || !password || !confirmPassword) {
+    if (!firstName || !lastName || !username || !password || !confirmPassword) {
       addToast({
         title: "Error",
         message: "Please fill in all fields",
-        type: "error"
+        type: "error",
       });
       return;
     }
@@ -51,7 +52,7 @@ export function RegisterForm() {
     setIsSubmitting(true);
     
     try {
-      const result = await register(name, email, password);
+      const result = await register(firstName, lastName, username, password);
       
       if (result.success) {
         addToast({
@@ -87,36 +88,54 @@ export function RegisterForm() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label 
-            htmlFor="name" 
+            htmlFor="firstName" 
             className="block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
-            Full Name
+            First Name
           </label>
           <input
-            id="name"
+            id="firstName"
             type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
             className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-            placeholder="John Doe"
+            placeholder="John"
+            required
+          />
+        </div>
+
+        <div>
+          <label 
+            htmlFor="lastName" 
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Last Name
+          </label>
+          <input
+            id="lastName"
+            type="text"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+            placeholder="Doe"
             required
           />
         </div>
         
         <div>
           <label 
-            htmlFor="email" 
+            htmlFor="username" 
             className="block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
-            Email
+            Username
           </label>
           <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            id="username"
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-            placeholder="your@email.com"
+            placeholder="your_username"
             required
           />
         </div>

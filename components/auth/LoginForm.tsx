@@ -8,7 +8,7 @@ import { useUI } from "@/context/UIContext";
 import { Button } from "@/components/common/Button";
 
 export function LoginForm() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login } = useAuth();
@@ -18,11 +18,11 @@ export function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password) {
+    if (!username || !password) {
       addToast({
         title: "Error",
         message: "Please fill in all fields",
-        type: "error"
+        type: "error",
       });
       return;
     }
@@ -30,7 +30,7 @@ export function LoginForm() {
     setIsSubmitting(true);
     
     try {
-      const result = await login(email, password);
+      const result = await login(username, password);
       
       if (result.success) {
         addToast({
@@ -65,19 +65,19 @@ export function LoginForm() {
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label 
-            htmlFor="email" 
+          <label
+            htmlFor="username"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
-            Email
+            Username
           </label>
           <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            id="username"
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-            placeholder="your@email.com"
+            placeholder="your username"
             required
           />
         </div>
@@ -152,7 +152,7 @@ export function LoginForm() {
       {/* Demo credentials */}
       <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-700 rounded text-xs text-center">
         <p className="font-bold mb-1">Demo Credentials</p>
-        <p>Email: user@example.com</p>
+        <p>Username: demouser</p>
         <p>Password: password</p>
       </div>
     </div>
