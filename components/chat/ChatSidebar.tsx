@@ -1,20 +1,21 @@
 import React from "react";
-import { Plus, Trash2, Edit, MoreVertical } from "lucide-react";
+import { Trash2, Edit, MoreVertical, RefreshCw } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { useChat, Chat } from "@/context/ChatContext";
 import { useAuth } from "@/context/AuthContext";
 import { formatDistanceToNow } from "date-fns";
 
+function getSidebarChatTitle(title: string) {
+  // Always show 'Name (Position)' if possible, fallback to title
+  return title;
+}
+
 export function ChatSidebar() {
-  const { chats, currentChat, createChat, deleteChat, setCurrentChat, isLoadingChats, updateChat } = useChat();
+  const { chats, currentChat, deleteChat, setCurrentChat, isLoadingChats, updateChat, clearAllChats } = useChat();
   const { user } = useAuth();
   const [editMode, setEditMode] = React.useState<string | null>(null);
   const [chatTitle, setChatTitle] = React.useState("");
   const [menuOpenFor, setMenuOpenFor] = React.useState<string | null>(null);
-
-  const handleCreateChat = () => {
-    createChat();
-  };
 
   const handleChatSelect = (chatId: string) => {
     setMenuOpenFor(null);
@@ -73,18 +74,25 @@ export function ChatSidebar() {
 
   return (
     <div className="h-full flex flex-col border-r">
-      <div className="p-4 border-b">
-        <Button onClick={handleCreateChat} className="w-full justify-start gap-2">
-          <Plus className="h-4 w-4" />
-          New Chat
-        </Button>
+      <div className="p-4 border-b flex justify-end items-center">
+        {chats.length > 0 && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={clearAllChats} 
+            title="Clear all chats"
+            className="text-muted-foreground hover:text-destructive"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+        )}
       </div>
       
       <div className="flex-1 overflow-y-auto">
         {chats.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full p-4 text-center text-muted-foreground">
             <p>No conversations yet</p>
-            <p className="text-sm mt-2">Start a new chat to begin</p>
+            <p className="text-sm mt-2">Start a new research to begin</p>
           </div>
         ) : (
           <div className="space-y-1 p-2">
@@ -117,7 +125,7 @@ export function ChatSidebar() {
                 ) : (
                   <>
                     <div className="flex items-center justify-between w-full">
-                      <span className="font-medium truncate">{chat.title}</span>
+                      <span className="font-medium truncate" title={getSidebarChatTitle(chat.title)}>{getSidebarChatTitle(chat.title)}</span>
                       <button
                         onClick={(e) => toggleMenu(e, chat.id)}
                         className="opacity-0 group-hover:opacity-100 ml-2 p-1 rounded-md hover:bg-accent"

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Menu, X, Sun, Moon, User, Info } from "lucide-react";
 import { Button } from "@/components/common/Button";
@@ -29,7 +30,14 @@ export function Navbar() {
       <div className="container flex h-16 items-center px-4 sm:px-6">
         <div className="flex items-center">
           <Link href="/" className="flex items-center mr-6">
-            <span className="text-2xl font-bold">Clara</span>
+            <Image
+              src="/images/clara_logo.png"
+              alt="Clara Logo"
+              width={100}
+              height={40}
+              className="h-10 w-auto"
+              priority
+            />
           </Link>
         </div>
         
@@ -51,7 +59,6 @@ export function Navbar() {
           ))}
           
           {/* My Picks menu item with conditional rendering */}
-          <div className="relative">
             {user ? (
               <Link
                 href="/my-picks"
@@ -66,7 +73,7 @@ export function Navbar() {
               </Link>
             ) : (
               <div
-                className="px-3 py-2 text-sm font-medium rounded-md text-gray-400 cursor-not-allowed"
+              className="relative px-3 py-2 text-sm font-medium rounded-md text-gray-400 cursor-not-allowed"
                 onMouseEnter={() => setShowMyPicksTooltip(true)}
                 onMouseLeave={() => setShowMyPicksTooltip(false)}
               >
@@ -80,7 +87,6 @@ export function Navbar() {
                 )}
               </div>
             )}
-          </div>
         </nav>
 
         <div className="flex-1" />

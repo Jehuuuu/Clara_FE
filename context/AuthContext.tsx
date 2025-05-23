@@ -11,6 +11,8 @@ export interface User {
   first_name: string;
   last_name: string;
   savedPicks: string[]; // IDs of saved candidates
+  token?: string; // JWT token for API authentication
+  refreshToken?: string; // JWT refresh token
 }
 
 
@@ -62,6 +64,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem("clara_user");
     }
   }, [user]);
+
+  // Get authentication token
+  const getToken = async (): Promise<string | null> => {
+    if (!user?.token) return null;
+
+    // Check if token needs refreshing
+    try {
+      // Verify the current token
+      await axios.post(`${API_URL}/auth/token/verify/`, {
+        token: user.token
+      });
+      
+      // Token is valid, return it
+      return user.token;
+    } catch (error) {
+      // Token is invalid, try to refresh it
+      console.log("Token invalid, attempting to refresh...");
+      
+      try {
+        if (user.refreshToken) {
+          const response = await axios.post(`${API_URL}/auth/token/refresh/`, {
+            refresh: user.refreshToken
+          });
+          
+          // Update the access token
+          const newToken = response.data.access;
+          setUser(prev => prev ? { ...prev, token: newToken } : null);
+          
+          return newToken;
+        }
+      } catch (refreshError) {
+        // Refresh failed, logout the user
+        console.error("Token refresh failed", refreshError);
+        await logout();
+      }
+    }
+    
+    return null;
+  };
 
   // Login function
   const login = async (
