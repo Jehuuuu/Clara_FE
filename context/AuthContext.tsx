@@ -32,6 +32,7 @@ interface AuthContextType {
   ) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
+  getToken: () => Promise<string | null>;
 }
 
 
@@ -69,40 +70,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Get authentication token
   const getToken = async (): Promise<string | null> => {
-    if (!user?.token) return null;
-
-    // Check if token needs refreshing
-    try {
-      // Verify the current token
-      await axios.post(`${API_URL}/auth/token/verify/`, {
-        token: user.token
-      });
-      
-      // Token is valid, return it
+    if (user && user.token) {
       return user.token;
-    } catch (error) {
-      // Token is invalid, try to refresh it
-      console.log("Token invalid, attempting to refresh...");
-      
-      try {
-        if (user.refreshToken) {
-          const response = await axios.post(`${API_URL}/auth/token/refresh/`, {
-            refresh: user.refreshToken
-          });
-          
-          // Update the access token
-          const newToken = response.data.access;
-          setUser(prev => prev ? { ...prev, token: newToken } : null);
-          
-          return newToken;
-        }
-      } catch (refreshError) {
-        // Refresh failed, logout the user
-        console.error("Token refresh failed", refreshError);
-        await logout();
-      }
     }
-    
+
+    // If no user or token, try to get from localStorage
+    const savedUser = localStorage.getItem("clara_user");
+    if (savedUser) {
+      const parsedUser = JSON.parse(savedUser);
+      return parsedUser.token || null;
+    }
+
     return null;
   };
 
@@ -165,8 +143,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       // Store tokens if needed
-      localStorage.setItem("accessToken", data.tokens.access);
-      localStorage.setItem("refreshToken", data.tokens.refresh);
+      // localStorage.setItem("accessToken", data.tokens.access);
+      // localStorage.setItem("refreshToken", data.tokens.refresh);
 
       return { success: true, message: "Registration successful" };
     } catch (error: any) {
@@ -199,7 +177,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         register,
         logout,
-        updateUser
+        updateUser, 
+        getToken,
       }}
     >
       {children}

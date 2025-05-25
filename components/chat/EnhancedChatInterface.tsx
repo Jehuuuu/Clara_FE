@@ -163,23 +163,25 @@ export function EnhancedChatInterface() {
     }
   }, [chatStarted, isResearching, currentChat, guestMessages]);
 
-  // When a chat is selected from the sidebar, update selectedPolitician and chatStarted
   useEffect(() => {
     if (currentChat) {
-      // If the chat has messages, set chatStarted to true
-      if (currentChat.messages && currentChat.messages.length > 0) {
+      // If the chat has Q&A items, consider the chat started
+      if (currentChat.qanda_set && currentChat.qanda_set.length > 0) {
         setChatStarted(true);
+      } else {
+        setChatStarted(false);
       }
-      // Try to parse name and position from title
-      if (currentChat.title && currentChat.title.includes("(")) {
-        const match = currentChat.title.match(/^(.*) \((.*)\)$/);
-        if (match) {
-          setSelectedPolitician({ name: match[1], position: match[2] });
-          setIsResearching(false);
-        }
+
+      // Assume you want to set selectedPolitician based on the `politician` string
+      // If politician is an object or has more data, adjust this accordingly
+      if (currentChat.politician) {
+        setSelectedPolitician({ name: currentChat.politician, position: null });
+        setIsResearching(false);
       }
+      console.log("Current chat updated:", currentChat);
     }
   }, [currentChat]);
+
 
   const handleStartChat = () => {
     setShowModal(true);
@@ -357,18 +359,23 @@ export function EnhancedChatInterface() {
       
       <div className="flex-1 p-4 overflow-y-auto">
         {/* Show chat history if currentChat exists and has messages */}
-        {user && currentChat && currentChat.messages && currentChat.messages.length > 0 ? (
-          <>
-            {currentChat.messages.map((message, idx) => (
-              <ChatMessageComponent
-                key={`${message.id || idx}`}
-                content={message.content}
-                role={message.role}
-                timestamp={message.timestamp}
-              />
+        {currentChat && currentChat.qanda_set ? (
+          <div className="flex flex-col gap-4 px-4">
+            {currentChat.qanda_set.map((qanda: any) => (
+              <div key={qanda.id} className="bg-white dark:bg-zinc-900 p-4 rounded-lg shadow">
+                <ChatMessageComponent
+                  content={qanda.question}
+                  role="user"
+                  timestamp={new Date(qanda.created_at)}
+                />
+                <ChatMessageComponent
+                  content={qanda.answer}
+                  role="assistant"
+                  timestamp={new Date(qanda.created_at)}
+                />
+              </div>
             ))}
-            <div ref={messagesEndRef} />
-          </>
+          </div>
         ) : !chatStarted ? (
           <div className="h-full flex flex-col items-center justify-center">
             <FileSearch className="h-16 w-16 mb-4 text-primary/50" />
