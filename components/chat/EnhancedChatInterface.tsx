@@ -7,24 +7,27 @@ import { Button } from "@/components/common/Button";
 import { Card } from "@/components/common/Card";
 import { useChat, Message } from "@/context/ChatContext";
 import { useAuth } from "@/context/AuthContext";
+import { CreateChatParams } from "@/context/ChatContext";
+
 import Link from "next/link";
+import { set } from "date-fns";
 
 // Modal component for politician selection
 function PoliticianSelectionModal({ onSubmit, onClose }: { 
-  onSubmit: (data: { name: string; position: string }) => void; 
+  onSubmit: (data: CreateChatParams) => void; 
   onClose: () => void;
 }) {
-  const [name, setName] = useState("");
+  const [politician, setName] = useState("");
   const [position, setPosition] = useState("");
   const [error, setError] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) {
+    if (!politician.trim()) {
       setError("Please enter a politician name");
       return;
     }
-    onSubmit({ name, position });
+    onSubmit({ politician, position });
   };
 
   return (
@@ -43,7 +46,7 @@ function PoliticianSelectionModal({ onSubmit, onClose }: {
               </label>
               <input 
                 type="text" 
-                value={name}
+                value={politician}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
                 placeholder="e.g., John Smith"
@@ -129,7 +132,7 @@ export function EnhancedChatInterface() {
   const [showModal, setShowModal] = useState(false);
   const [chatStarted, setChatStarted] = useState(false);
   const [isResearching, setIsResearching] = useState(false);
-  const [selectedPolitician, setSelectedPolitician] = useState<{name: string, position: string} | null>(null);
+  const [selectedPolitician, setSelectedPolitician] = useState<{politician: string, position: string} | null>(null);
   
   // Session chat state for guest users
   const [guestMessages, setGuestMessages] = useState<Message[]>([]);
@@ -141,8 +144,8 @@ export function EnhancedChatInterface() {
   const getChatTitle = () => {
     if (selectedPolitician) {
       const base = selectedPolitician.position
-        ? `${selectedPolitician.name} (${selectedPolitician.position})`
-        : selectedPolitician.name;
+        ? `${selectedPolitician.politician} (${selectedPolitician.position})`
+        : selectedPolitician.politician;
       return base;
     }
     if (currentChat) {
@@ -175,7 +178,7 @@ export function EnhancedChatInterface() {
       // Assume you want to set selectedPolitician based on the `politician` string
       // If politician is an object or has more data, adjust this accordingly
       if (currentChat.politician) {
-        setSelectedPolitician({ name: currentChat.politician, position: null });
+        setSelectedPolitician({ politician: currentChat.politician, position: '' });
         setIsResearching(false);
       }
       console.log("Current chat updated:", currentChat);
@@ -183,11 +186,29 @@ export function EnhancedChatInterface() {
   }, [currentChat]);
 
 
+  const generateInitialReport = async (politician: CreateChatParams) => {
+    setIsResearching(true);
+    try {
+      const research = await fetchResearchByPoliticianAndPosition(politician.politician, politician.position);
+      console.log("Fetched research:", research);
+      
+      // TODO: handle the research data (e.g. update state, pass to context, etc.)
+      
+    } catch (error) {
+      console.error("Error fetching research:", error);
+      // Optionally set an error state or display a message to the user
+    }
+    setIsResearching(false);
+    // Create a new chat with the politician's name and position
+    createResearchChat(politician);
+
+  };
+
   const handleStartChat = () => {
     setShowModal(true);
   };
 
-  const handlePoliticianSelect = (data: {name: string, position: string}) => {
+  const handlePoliticianSelect = (data: CreateChatParams) => {
     setShowModal(false);
     setSelectedPolitician(data);
     setIsResearching(true);
@@ -201,86 +222,34 @@ export function EnhancedChatInterface() {
   };
 
   // Helper to create a new chat with the correct title
-  const createResearchChat = (politician: {name: string, position: string}, initialMessage: string) => {
-    const title = politician.position
-      ? `${politician.name} (${politician.position})`
-      : politician.name;
-    createChat();
-    setTimeout(() => {
-      updateChat && currentChat && updateChat(currentChat.id, { title });
-      addMessageToCurrentChat({
-        content: initialMessage,
-        role: "assistant",
-        timestamp: new Date()
-      });
-    }, 100);
+  const createResearchChat = (politician: CreateChatParams) => {
+    createChat(politician, user?.refreshToken || null)
   };
 
-  const generateInitialReport = (politician: {name: string, position: string}) => {
-    const reportContent = `\n# Research Report: ${politician.name}${politician.position ? ` (${politician.position})` : ''}\n\n## Searching for information...\n\nI'm now connected to the backend research service to find information about ${politician.name}.\n\nTo learn more about this candidate, you can ask specific questions about their:\n- Background and education\n- Political positions and policies\n- Voting record\n- Campaign platforms\n- Recent activities\n\nWhat would you like to know about ${politician.name}?\n`;
-
-    if (user) {
-      // For authenticated users
-      if (!currentChat) {
-        // Create a new chat with title based on the politician's name and position
-        createResearchChat(politician, reportContent);
-      } else {
-        // Update chat title if needed
-        const title = politician.position
-          ? `${politician.name} (${politician.position})`
-          : politician.name;
-        updateChat(currentChat.id, { title });
-        addMessageToCurrentChat({
-          content: reportContent,
-          role: "assistant",
-          timestamp: new Date()
-        });
-      }
-    } else {
-      // For guest users
-      setGuestMessages([{
-        id: `report-${Date.now()}`,
-        content: reportContent,
-        role: "assistant",
-        timestamp: new Date()
-      }]);
-    }
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
+    console.log("Submit input:", input);
     e.preventDefault();
-    if (!input.trim() || isLoading || !chatStarted || isResearching) return;
-    
+    console.log("input.trim():", input.trim());
+    console.log("isLoading:", isLoading);
+    console.log("chatStarted:", chatStarted);
+    console.log("isResearching:", isResearching);
+    // removed !chatStarted check to allow input submission even if chat hasn't started
+    if (!input.trim() || isLoading || isResearching) return;
+
+    console.log("user:", user);
+    console.log("currentChat:", currentChat);
     if (user && currentChat) {
       // Authenticated user - add user message to saved chats
-      const userMessage: Omit<Message, "id"> = {
-        content: input,
-        role: "user",
-        timestamp: new Date()
-      };
-      addMessageToCurrentChat(userMessage);
+      addMessageToCurrentChat(input);
+      console.log("Adding message to current chat:", input);
       setIsLoading(true);
       setInput("");
       // Simulate assistant response
       setTimeout(() => {
-        generateResponse(input);
         setIsLoading(false);
       }, 1000);
     } else {
-      // Guest user - use local state only
-      const userMessage: Message = {
-        id: `guest-msg-${Date.now()}`,
-        content: input,
-        role: "user",
-        timestamp: new Date()
-      };
-      setGuestMessages(prev => [...prev, userMessage]);
-      setIsLoading(true);
-      setInput("");
-      setTimeout(() => {
-        generateResponse(input);
-        setIsLoading(false);
-      }, 1000);
     }
   };
   
@@ -288,7 +257,7 @@ export function EnhancedChatInterface() {
     if (!selectedPolitician) return;
     
     // Generate response about needing to connect to the API
-    const responseContent = `I need to connect to the research API to provide accurate information about ${selectedPolitician.name}. \n\nWhen the backend API integration is complete, I'll be able to search for specific information about their positions on ${question.includes("economy") ? "economic policies" : question.includes("healthcare") ? "healthcare reform" : question.includes("education") ? "education initiatives" : "various political issues"}.\n\nWould you like me to look up something else about this politician?`;
+    const responseContent = `I need to connect to the research API to provide accurate information about ${selectedPolitician.politician}. \n\nWhen the backend API integration is complete, I'll be able to search for specific information about their positions on ${question.includes("economy") ? "economic policies" : question.includes("healthcare") ? "healthcare reform" : question.includes("education") ? "education initiatives" : "various political issues"}.\n\nWould you like me to look up something else about this politician?`;
     
     if (user && currentChat) {
       // Authenticated user - add assistant response to saved chats

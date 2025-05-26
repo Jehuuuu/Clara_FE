@@ -14,6 +14,15 @@ interface AddChatResponse {
   qanda_set: any[];            // You can type more specifically if needed
 }
 
+export interface QandA {
+  id: number;
+  chat: number;
+  question: string;
+  answer: string;
+  created_at: string;
+}
+
+
 /**
  * Adds a chat by sending politician and position
  * Optionally includes JWT token in Authorization header
@@ -87,4 +96,44 @@ export async function getAllChats(token: string | null): Promise<Chat[]> {
 
   const chats: Chat[] = await response.json();
   return chats;
+}
+
+/**
+ * Fetches Q&A sets for a specific chat
+ * Requires JWT token for authentication
+ * @param chatId - ID of the chat
+ * @param token - JWT token string
+ * @param limit - Optional limit of Q&A entries to fetch (default 10)
+ * @param offset - Optional offset for pagination (default 0)
+ * @returns Promise resolving to an array of Q&A entries
+ */
+export async function getChatQandA(
+  chatId: number,
+  token: string,
+  limit = 10,
+  offset = 0
+): Promise<QandA[]> {
+  const url = `http://localhost:8000/api/chat/chats/${chatId}/qanda/?limit=${limit}&offset=${offset}`;
+
+  if (!token) {
+    throw new Error('Authentication token is required to fetch Q&A.');
+  }
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error('Chat not found or access denied.');
+    }
+    throw new Error(`Failed to fetch Q&A: ${response.status} ${response.statusText}`);
+  }
+
+  const qanda: QandA[] = await response.json();
+  return qanda;
 }

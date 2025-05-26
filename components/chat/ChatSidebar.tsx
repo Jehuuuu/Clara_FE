@@ -27,7 +27,7 @@ export function ChatSidebar() {
   const handleChatSelect = (chatId: number) => {
     setMenuOpenFor(null);
     setEditMode(null);
-    setCurrentChat(chatId);
+    setCurrentChat(chatId, user?.refreshToken || "");
     console.log("Selected chat:", chatId);
   };
 
@@ -177,7 +177,7 @@ export function ChatSidebar() {
                   )}
 
                   <div className="text-xs text-muted-foreground mt-1 truncate">
-                    {chat.qanda_set.length > 1
+                    {chat.qanda_set && chat.qanda_set.length > 1
                       ? `${chat.qanda_set.length} exchanges`
                       : "1 exchange"}{" "}
                     ·{" "}

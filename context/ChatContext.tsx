@@ -3,11 +3,14 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
 import axios from "axios";
-import { getAllChats, addChat } from "../lib/api/chat"; // Adjust the import path as needed
+import { getAllChats, addChat, getChatQandA } from "../lib/api/chat"; // Adjust the import path as needed
+import { AddQuestionRequest } from "../lib/api/question"; // Adjust the import path as needed
+import { addQuestion } from "../lib/api/question"; // Adjust the import path as needed
+import { set } from "date-fns";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
-interface CreateChatParams {
+export interface CreateChatParams {
   politician: string;
   position: string;
 }
@@ -44,8 +47,8 @@ interface ChatContextType {
   createChat: (params: CreateChatParams, token: string | null) => Promise<void>;
   updateChat: (chatId: number, updates: Partial<Omit<Chat, "id">>) => void;
   deleteChat: (chatId: number) => void;
-  setCurrentChat: (chatId: number) => void;
-  addMessageToCurrentChat: (message: Omit<Message, "id">) => void;
+  setCurrentChat: (chatId: number, token: string) => void;
+  addMessageToCurrentChat: (question: string) => void;
   clearCurrentChat: () => void;
   clearAllChats: () => void;
 }
@@ -114,6 +117,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       const newChat = await addChat(params, token);
       console.log('Chat created successfully:', newChat);
       // Optionally update state or UI here
+      setChats(prevChats => [...prevChats, formatDates(newChat)]);
+      setCurrentChatState(formatDates(newChat)); // Set newly created chat as current
     } catch (error) {
       console.error('Error creating chat:', error);
     }
@@ -132,7 +137,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   };
   
   // Set current chat
-  const setCurrentChat = async (chatId: number | null) => {
+  const setCurrentChat = async (chatId: number | null, token: string) => {
     // Only allow authenticated users to switch between saved chats
     if (!user) {
       console.log("Guest users cannot switch between persistent chats");
@@ -147,14 +152,64 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       console.error(`Chat with ID ${chatId} not found`);
       return;
     }
-    setCurrentChatState(chat);
+    try {
+      const qanda = await getChatQandA(chatId, token);
+      console.log("Fetched Q&A:", qanda);
+      chat.qanda_set = qanda; // Update the chat's Q&A set
+      setCurrentChatState(chat); // Update state with fetched Q&A
+    } catch (err) {
+      console.error(err);
+    }
+    
+
     console.log("Current chat set to:", chat);
   };
   
   // Add message to current chat
-  const addMessageToCurrentChat = async (message: Omit<Message, "id">) => {
-    // Only allow authenticated users to add messages to persistent chats
-    
+  const addMessageToCurrentChat = async (question: string) => {
+    // Ensure currentChat exists and user is authenticated
+    if (!currentChat) {
+      console.error("No current chat selected.");
+      return;
+    }
+
+    const token = localStorage.getItem("refreshToken") || user?.refreshToken || null;
+    if (!token) {
+      console.error("User must be authenticated to add a message.");
+      return;
+    }
+
+    try {
+      const payload: AddQuestionRequest = {
+        chat_id: currentChat.id,
+        question: question,
+      };
+
+      const response = await addQuestion(payload, token);
+
+      setCurrentChatState(prevChat => {
+        if (!prevChat) return null; // Safety check
+        // Update the current chat with the new Q&A entry
+        return {  
+          ...prevChat,
+          qanda_set: [...prevChat.qanda_set, response] // Append new Q&A
+        };
+      }
+      );
+
+      // currentChat.qanda_set.push({
+      //   id: response.id,
+      //   chat: response.chat,
+      //   question: response.question,
+      //   answer: response.answer,
+      //   created_at: response.created_at,
+      // });
+      
+      console.log("Message added with answer:", response);
+
+    } catch (err) {
+      console.error("Error adding message:", err);
+    }
   };
   
   // Clear current chat

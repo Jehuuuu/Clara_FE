@@ -1,5 +1,5 @@
 // Request body interface for adding a question
-interface AddQuestionRequest {
+export interface AddQuestionRequest {
   chat_id: number;
   question: string;
 }
