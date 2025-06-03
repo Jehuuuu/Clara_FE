@@ -271,7 +271,7 @@ export function EnhancedChatInterface() {
   
   // Render the chat interface
   return (
-    <Card className="flex flex-col w-full h-[80vh] max-h-[700px] overflow-hidden">
+    <div className="chat-interface">
       {showModal && (
         <PoliticianSelectionModal 
           onSubmit={handlePoliticianSelect}
@@ -279,111 +279,110 @@ export function EnhancedChatInterface() {
         />
       )}
       
-      <div className="p-4 border-b flex items-center justify-between">
-        <div className="min-w-0">
-          <h2 className="text-lg font-medium truncate" title={getChatTitle()}>
-            {getChatTitle()}
-          </h2>
-          <p className="text-sm text-muted-foreground truncate">
-            {chatStarted
-              ? "Ask questions about this politician's positions and background"
-              : "Start researching a politician to learn more"}
-          </p>
+      {/* Chat Header */}
+      <div className="chat-header">
+        <div className="chat-header-content">
+          <div className="min-w-0">
+            <h2 className="text-xl font-semibold text-gray-900 truncate" title={getChatTitle()}>
+              {getChatTitle()}
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">
+              {chatStarted
+                ? "Ask questions about this politician's positions and background"
+                : "Start researching a politician to learn more"}
+            </p>
+          </div>
         </div>
-        
-        {chatStarted && (
-          <Button
-            variant="ghost" 
-            size="icon"
-            onClick={handleNewResearch}
-            className="text-muted-foreground"
-            title="New research"
-          >
-            <RotateCcw className="h-5 w-5" />
-          </Button>
-        )}
       </div>
       
-      <div className="flex-1 p-4 overflow-y-auto">
-        {/* Show chat history if currentChat exists and has messages */}
-        {currentChat && currentChat.qanda_set && currentChat.qanda_set.length > 0 ? (
-          <div className="flex flex-col gap-4 px-4">
-            {currentChat.qanda_set.map((qanda: any) => (
-              <div key={qanda.id} className="space-y-2">
-                <ChatMessageComponent
-                  content={qanda.question}
-                  role="user"
-                  timestamp={new Date(qanda.created_at)}
-                />
-                <ChatMessageComponent
-                  content={qanda.answer}
-                  role="assistant"
-                  timestamp={new Date(qanda.created_at)}
-                />
-              </div>
-            ))}
-          </div>
-        ) : !chatStarted ? (
-          <div className="h-full flex flex-col items-center justify-center">
-            <FileSearch className="h-16 w-16 mb-4 text-primary/50" />
-            <h3 className="text-xl font-semibold mb-2">Start Your Research</h3>
-            <p className="text-center text-muted-foreground mb-6 max-w-md">
-              Begin by researching a politician to get a comprehensive report on their background, 
-              policies, and positions. Then you can ask questions to learn more.
-            </p>
-            <Button onClick={handleStartChat}>
-              Start New Research
-            </Button>
-            
-            {!user && (
-              <p className="mt-6 text-sm text-muted-foreground">
-                <Link href="/auth/login" className="text-primary underline">
-                  Sign in
-                </Link> to save your research history
+      {/* Messages Area */}
+      <div className="chat-messages-area">
+        <div className="chat-messages-container">
+          {/* Show chat history if currentChat exists and has messages */}
+          {currentChat && currentChat.qanda_set && currentChat.qanda_set.length > 0 ? (
+            <div className="py-6 space-y-2">
+              {currentChat.qanda_set.map((qanda: any) => (
+                <React.Fragment key={qanda.id}>
+                  <ChatMessageComponent
+                    content={qanda.question}
+                    role="user"
+                    timestamp={new Date(qanda.created_at)}
+                  />
+                  <ChatMessageComponent
+                    content={qanda.answer}
+                    role="assistant"
+                    timestamp={new Date(qanda.created_at)}
+                  />
+                </React.Fragment>
+              ))}
+            </div>
+          ) : !chatStarted ? (
+            <div className="h-full flex flex-col items-center justify-center py-16">
+              <FileSearch className="h-20 w-20 mb-6 text-blue-500/20" />
+              <h3 className="text-2xl font-semibold text-gray-900 mb-3">Start Your Research</h3>
+              <p className="text-center text-gray-600 mb-8 max-w-md">
+                Begin by researching a politician to get a comprehensive report on their background, 
+                policies, and positions. Then you can ask questions to learn more.
               </p>
-            )}
-          </div>
-        ) : isResearchLoading ? (
-          <ResearchLoadingIndicator />
-        ) : (
-          // Guest user chat history or empty chat
-          <>
-            {guestMessages.map((message, idx) => (
-              <ChatMessageComponent
-                key={`${message.id}-${idx}`}
-                content={message.content}
-                role={message.role}
-                timestamp={message.timestamp}
-              />
-            ))}
-            <div ref={messagesEndRef} />
-          </>
-        )}
+              <Button onClick={handleStartChat} size="lg" className="shadow-sm">
+                Start New Research
+              </Button>
+              
+              {!user && (
+                <p className="mt-8 text-sm text-gray-500">
+                  <Link href="/auth/login" className="text-blue-600 hover:text-blue-700 underline">
+                    Sign in
+                  </Link> to save your research history
+                </p>
+              )}
+            </div>
+          ) : isResearchLoading ? (
+            <div className="py-16">
+              <ResearchLoadingIndicator />
+            </div>
+          ) : (
+            // Guest user chat history or empty chat
+            <div className="py-6 space-y-2">
+              {guestMessages.map((message, idx) => (
+                <ChatMessageComponent
+                  key={`${message.id}-${idx}`}
+                  content={message.content}
+                  role={message.role}
+                  timestamp={message.timestamp}
+                />
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+        </div>
       </div>
       
       {/* Input area */}
       {(chatStarted || currentChat) && !isResearchLoading && (
-        <div className="p-4 border-t">
-          <form onSubmit={handleSubmit} className="flex gap-2">
-            <input
-              ref={inputRef}
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={`Ask about ${selectedPolitician?.politician || currentPoliticianName || 'this politician'}...`}
-              className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary"
-              disabled={isLoading}
-            />
-            <Button 
-              type="submit" 
-              disabled={!input.trim() || isLoading}
-              size="icon"
-            >
-                <SendIcon className="h-4 w-4" />
-            </Button>
-          </form>
+        <div className="chat-input-area">
+          <div className="chat-input-container">
+            <form onSubmit={handleSubmit} className="flex gap-3">
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={`Ask about ${selectedPolitician?.politician || currentPoliticianName || 'this politician'}...`}
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={isLoading}
+              />
+              <Button 
+                type="submit" 
+                disabled={!input.trim() || isLoading}
+                size="icon"
+                className="h-[48px] w-[48px]"
+              >
+                <SendIcon className="h-5 w-5" />
+              </Button>
+            </form>
           </div>
-        )}
-    </Card>
+        </div>
+      )}
+    </div>
   );
 } 

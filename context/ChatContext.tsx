@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
 import axios from "axios";
-import { getAllChats, addChat, getChatQandA } from "../lib/api/chat"; // Adjust the import path as needed
+import { getAllChats, addChat, getChatQandA, deleteChat as apiDeleteChat } from "../lib/api/chat"; // Adjust the import path as needed
 import { AddQuestionRequest } from "../lib/api/question"; // Adjust the import path as needed
 import { addQuestion } from "../lib/api/question"; // Adjust the import path as needed
 import { fetchResearchByPoliticianAndPosition, ResearchResponse, fetchResearchById } from "../lib/api/research"; // Import research API
@@ -34,6 +34,8 @@ export interface QAndA {
 export interface Chat {
   id: number;
   politician: string;
+  politician_image?: string;
+  politician_party?: string;
   user: number;
   research_report: number;
   qanda_set: QAndA[]; // or just `any[]` if structure is unknown
@@ -48,9 +50,8 @@ interface ChatContextType {
   currentChat: Chat | null;
   isLoadingChats: boolean;
   createChat: (params: CreateChatParams, token: string | null) => Promise<void>;
-  updateChat: (chatId: number, updates: Partial<Omit<Chat, "id">>) => void;
   deleteChat: (chatId: number) => void;
-  setCurrentChat: (chatId: number, token: string) => void;
+  setCurrentChat: (chatId: number | null, token: string) => void;
   addMessageToCurrentChat: (question: string) => void;
   clearCurrentChat: () => void;
   clearAllChats: () => void;
@@ -86,6 +87,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const formatDates = (chat: any): Chat => ({
     id: chat.id,
     politician: chat.politician,
+    politician_image: chat.politician_image,
+    politician_party: chat.politician_party,
     user: chat.user,
     research_report: chat.research_report,
     qanda_set: chat.qanda_set || [],
@@ -193,16 +196,37 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     }
   };
   
-  // Update a chat
-  const updateChat = async (chatId: number, updates: Partial<Omit<Chat, "id">>) => {
-    // Only allow authenticated users to update chats
-    
-  };
-  
   // Delete a chat
   const deleteChat = async (chatId: number) => {
     // Only allow authenticated users to delete chats
-    
+    if (!user) {
+      console.error("Guest users cannot delete chats");
+      return;
+    }
+
+    const token = user.refreshToken;
+    if (!token) {
+      console.error("No token available for deleting chat");
+      return;
+    }
+
+    try {
+      await apiDeleteChat(chatId, token);
+      
+      // Remove from local state
+      setChats(prevChats => prevChats.filter(chat => chat.id !== chatId));
+
+      // Clear current chat if it's the one being deleted
+      if (currentChat?.id === chatId) {
+        setCurrentChatState(null);
+        clearResearchData();
+      }
+
+      console.log("Chat deleted successfully");
+    } catch (error) {
+      console.error("Failed to delete chat:", error);
+      throw error; // Re-throw so the UI can handle it
+    }
   };
   
   // Set current chat
@@ -232,8 +256,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       
       // Instead of always fetching new research data, fetch the existing report
       if (chat.research_report) {
-        // Add a new function to fetch research by ID
-        const researchData = await fetchResearchById(chat.research_report, token);
+        // Fetch research by ID
+        const researchData = await fetchResearchById(chat.research_report, false);
         setResearchData(researchData);
         setCurrentPoliticianName(chat.politician);
         // Get position from research data if available
@@ -311,7 +335,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         currentChat,
         isLoadingChats,
         createChat,
-        updateChat,
         deleteChat,
         setCurrentChat,
         addMessageToCurrentChat,

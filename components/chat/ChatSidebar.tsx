@@ -1,5 +1,5 @@
 import React from "react";
-import { Trash2, Edit, MoreVertical, RefreshCw } from "lucide-react";
+import { Trash2, MoreVertical } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { useChat, Chat } from "@/context/ChatContext";
 import { useAuth } from "@/context/AuthContext";
@@ -16,40 +16,32 @@ export function ChatSidebar() {
     deleteChat,
     setCurrentChat,
     isLoadingChats,
-    updateChat,
-    clearAllChats,
   } = useChat();
   const { user } = useAuth();
-  const [editMode, setEditMode] = React.useState<number | null>(null);
   const [menuOpenFor, setMenuOpenFor] = React.useState<number | null>(null);
-  const [chatTitle, setChatTitle] = React.useState<string>("");
+  const [isDeleting, setIsDeleting] = React.useState<number | null>(null);
+  const [error, setError] = React.useState<string>("");
 
   const handleChatSelect = (chatId: number) => {
     setMenuOpenFor(null);
-    setEditMode(null);
+    setError("");
     setCurrentChat(chatId, user?.refreshToken || "");
     console.log("Selected chat:", chatId);
   };
 
-  const handleDeleteChat = (e: React.MouseEvent, chatId: number) => {
+  const handleDeleteChat = async (e: React.MouseEvent, chatId: number) => {
     e.stopPropagation();
     setMenuOpenFor(null);
-    deleteChat(chatId);
-  };
+    setIsDeleting(chatId);
+    setError("");
 
-  const handleEditClick = (e: React.MouseEvent, chat: Chat) => {
-    e.stopPropagation();
-    setMenuOpenFor(null);
-    setEditMode(chat.id);
-    setChatTitle(chat.politician);
-  };
-
-  const handleEditSubmit = (e: React.FormEvent, chatId: number) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    updateChat(chatId, { politician: chatTitle });
-    setEditMode(null);
+    try {
+      await deleteChat(chatId);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Failed to delete chat");
+    } finally {
+      setIsDeleting(null);
+    }
   };
 
   const toggleMenu = (e: React.MouseEvent, chatId: number) => {
@@ -79,19 +71,18 @@ export function ChatSidebar() {
 
   return (
     <div className="h-full flex flex-col border-r">
-      <div className="p-4 border-b flex justify-end items-center">
-        {chats.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearAllChats}
-            title="Clear all chats"
-            className="text-muted-foreground hover:text-destructive"
+      {/* Error Message */}
+      {error && (
+        <div className="p-2 m-2 bg-red-50 border border-red-200 rounded-md">
+          <p className="text-sm text-red-600">{error}</p>
+          <button 
+            onClick={() => setError("")}
+            className="text-xs text-red-500 hover:text-red-700 mt-1"
           >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
+            Dismiss
+          </button>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto">
         {chats.length === 0 ? (
@@ -111,69 +102,38 @@ export function ChatSidebar() {
                     currentChat?.id === chat.id
                       ? "bg-accent text-accent-foreground"
                       : "hover:bg-muted/50 cursor-pointer"
-                  }`}
+                  } ${isDeleting === chat.id ? "opacity-50 pointer-events-none" : ""}`}
                 >
-                  {editMode === chat.id ? (
-                    <form
-                      onSubmit={(e) => handleEditSubmit(e, chat.id)}
-                      className="flex w-full items-center gap-2"
+                  <div className="flex items-center justify-between w-full">
+                    <span
+                      className="font-medium truncate"
+                      title={getSidebarChatTitle(chat.politician)}
                     >
-                      <input
-                        type="text"
-                        value={chatTitle}
-                        onChange={(e) => setChatTitle(e.target.value)}
-                        className="flex-1 bg-background rounded px-2 py-1 text-sm focus:outline-none"
-                        autoFocus
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      <Button
-                        type="submit"
-                        size="sm"
-                        variant="ghost"
-                        className="h-auto px-2 py-1"
-                      >
-                        Save
-                      </Button>
-                    </form>
-                  ) : (
-                    <>
-                      <div className="flex items-center justify-between w-full">
-                        <span
-                          className="font-medium truncate"
-                          title={getSidebarChatTitle(chat.politician)}
-                        >
-                          {getSidebarChatTitle(chat.politician)}
-                        </span>
-                        <button
-                          onClick={(e) => toggleMenu(e, chat.id)}
-                          className="opacity-0 group-hover:opacity-100 ml-2 p-1 rounded-md hover:bg-accent"
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </button>
-                      </div>
+                      {getSidebarChatTitle(chat.politician)}
+                    </span>
+                    <button
+                      onClick={(e) => toggleMenu(e, chat.id)}
+                      className="opacity-0 group-hover:opacity-100 ml-2 p-1 rounded-md hover:bg-accent"
+                      disabled={isDeleting === chat.id}
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
+                  </div>
 
-                      {menuOpenFor === chat.id && (
-                        <div
-                          className="absolute right-2 top-10 z-10 bg-background rounded-md shadow-md border p-1 min-w-[120px]"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <button
-                            onClick={(e) => handleEditClick(e, chat)}
-                            className="flex w-full items-center px-2 py-1 text-left text-sm hover:bg-accent rounded-sm"
-                          >
-                            <Edit className="h-4 w-4 mr-2" />
-                            Rename
-                          </button>
-                          <button
-                            onClick={(e) => handleDeleteChat(e, chat.id)}
-                            className="flex w-full items-center px-2 py-1 text-left text-sm text-destructive hover:bg-accent rounded-sm"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </>
+                  {menuOpenFor === chat.id && (
+                    <div
+                      className="absolute right-2 top-10 z-10 bg-background rounded-md shadow-md border p-1 min-w-[120px]"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        onClick={(e) => handleDeleteChat(e, chat.id)}
+                        className="flex w-full items-center px-2 py-1 text-left text-sm text-destructive hover:bg-accent rounded-sm"
+                        disabled={isDeleting === chat.id}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        {isDeleting === chat.id ? "Deleting..." : "Delete"}
+                      </button>
+                    </div>
                   )}
 
                   <div className="text-xs text-muted-foreground mt-1 truncate">

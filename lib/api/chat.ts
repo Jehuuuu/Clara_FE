@@ -137,3 +137,35 @@ export async function getChatQandA(
   const qanda: QandA[] = await response.json();
   return qanda;
 }
+
+/**
+ * Delete a chat by ID
+ * JWT token is required
+ * @param chatId - ID of the chat to delete
+ * @param token - JWT token string
+ * @returns Promise that resolves when chat is deleted
+ */
+export async function deleteChat(chatId: number, token: string): Promise<void> {
+  const url = `http://127.0.0.1:8000/api/chat/chats/${chatId}/`;
+
+  const response = await fetch(url, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error('Authentication required or token expired.');
+    }
+    if (response.status === 403) {
+      throw new Error('You can only delete your own chats.');
+    }
+    if (response.status === 404) {
+      throw new Error('Chat not found.');
+    }
+    throw new Error(`Failed to delete chat: ${response.status} ${response.statusText}`);
+  }
+}

@@ -8,6 +8,8 @@ export interface ResearchResponse {
   summary: string;
   created_at: string;
   updated_at: string;
+  politician_image?: string;
+  politician_party?: string;
   metadata: {
     is_fresh: boolean;
     age_days: number;
