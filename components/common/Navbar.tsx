@@ -119,7 +119,7 @@ export function Navbar() {
               {isProfileMenuOpen && (
                 <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5">
                   <div className="px-4 py-2 text-sm text-gray-700 dark:text-gray-200 border-b">
-                    <p className="font-medium">{user.name}</p>
+                    <p className="font-medium">{user.username}</p>
                     <p className="text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
                   </div>
                   <Link 

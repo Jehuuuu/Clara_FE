@@ -103,8 +103,10 @@ export default function CandidatesPage() {
   
   // Apply debounced search term to filter
   useEffect(() => {
-    setSearchTerm(debouncedSearchTerm);
-  }, [debouncedSearchTerm, setSearchTerm]);
+    if (filter.searchTerm !== debouncedSearchTerm) {
+      setSearchTerm(debouncedSearchTerm);
+    }
+  }, [debouncedSearchTerm, filter.searchTerm, setSearchTerm]);
   
   // Apply URL search param on initial load
   useEffect(() => {
@@ -113,7 +115,7 @@ export default function CandidatesPage() {
       setLocalSearchTerm(initialSearch);
       setSearchTerm(initialSearch);
     }
-  }, [searchParams, setSearchTerm]);
+  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
   
   const filteredCandidates = getFilteredCandidates();
   
@@ -368,4 +370,4 @@ export default function CandidatesPage() {
       </div>
     </div>
   );
-} 
+}
