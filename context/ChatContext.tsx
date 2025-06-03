@@ -6,7 +6,7 @@ import axios from "axios";
 import { getAllChats, addChat, getChatQandA } from "../lib/api/chat"; // Adjust the import path as needed
 import { AddQuestionRequest } from "../lib/api/question"; // Adjust the import path as needed
 import { addQuestion } from "../lib/api/question"; // Adjust the import path as needed
-import { fetchResearchByPoliticianAndPosition, ResearchResponse } from "../lib/api/research"; // Import research API
+import { fetchResearchByPoliticianAndPosition, ResearchResponse, fetchResearchById } from "../lib/api/research"; // Import research API
 import { set } from "date-fns";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
@@ -227,14 +227,17 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     try {
       const qanda = await getChatQandA(chatId, token);
       console.log("Fetched Q&A:", qanda);
-      chat.qanda_set = qanda; // Update the chat's Q&A set
-      setCurrentChatState(chat); // Update state with fetched Q&A
+      chat.qanda_set = qanda;
+      setCurrentChatState(chat);
       
-      // Fetch research data for this chat's politician
-      // Note: We need to determine position from the chat data
-      // For now, we'll use a default position or extract from chat data
-      if (chat.politician) {
-        await fetchResearchData(chat.politician, "President"); // Default position
+      // Instead of always fetching new research data, fetch the existing report
+      if (chat.research_report) {
+        // Add a new function to fetch research by ID
+        const researchData = await fetchResearchById(chat.research_report, token);
+        setResearchData(researchData);
+        setCurrentPoliticianName(chat.politician);
+        // Get position from research data if available
+        setCurrentPosition(researchData.position || "Unknown");
       }
     } catch (err) {
       console.error(err);
@@ -338,4 +341,4 @@ export function useChat() {
     throw new Error("useChat must be used within a ChatProvider");
   }
   return context;
-} 
+}
