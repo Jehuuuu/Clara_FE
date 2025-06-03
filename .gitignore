@@ -56,4 +56,7 @@ desktop.ini
 # Optional
 *.log
 .npm
-.yarn-integrity 
+.yarn-integrity
+
+# Analysis Reports (not to be tracked)
+../CLARA_PROJECT_ANALYSIS.md 

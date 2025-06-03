@@ -122,7 +122,16 @@ function ResearchLoadingIndicator() {
 
 export function EnhancedChatInterface() {
   const { user } = useAuth();
-  const { currentChat, createChat, addMessageToCurrentChat, clearCurrentChat, updateChat, setCurrentChat } = useChat();
+  const { 
+    currentChat, 
+    createChat, 
+    addMessageToCurrentChat, 
+    clearCurrentChat, 
+    updateChat, 
+    setCurrentChat,
+    isResearchLoading,
+    currentPoliticianName
+  } = useChat();
   
   // Chat states
   const [input, setInput] = useState("");
@@ -131,7 +140,6 @@ export function EnhancedChatInterface() {
   // New workflow states
   const [showModal, setShowModal] = useState(false);
   const [chatStarted, setChatStarted] = useState(false);
-  const [isResearching, setIsResearching] = useState(false);
   const [selectedPolitician, setSelectedPolitician] = useState<{politician: string, position: string} | null>(null);
   
   // Session chat state for guest users
@@ -149,7 +157,7 @@ export function EnhancedChatInterface() {
       return base;
     }
     if (currentChat) {
-      return currentChat.title;
+      return currentChat.politician;
     }
     return "Politician Research";
   };
@@ -157,14 +165,14 @@ export function EnhancedChatInterface() {
   // Auto-scroll to bottom of messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [currentChat?.messages, guestMessages]);
+  }, [currentChat?.qanda_set, guestMessages]);
 
   // Focus input on load and when current chat changes
   useEffect(() => {
-    if (chatStarted && !isResearching) {
+    if (chatStarted && !isResearchLoading) {
       inputRef.current?.focus();
     }
-  }, [chatStarted, isResearching, currentChat, guestMessages]);
+  }, [chatStarted, isResearchLoading, currentChat, guestMessages]);
 
   useEffect(() => {
     if (currentChat) {
@@ -175,34 +183,13 @@ export function EnhancedChatInterface() {
         setChatStarted(false);
       }
 
-      // Assume you want to set selectedPolitician based on the `politician` string
-      // If politician is an object or has more data, adjust this accordingly
+      // Set selectedPolitician based on the current chat
       if (currentChat.politician) {
         setSelectedPolitician({ politician: currentChat.politician, position: '' });
-        setIsResearching(false);
       }
       console.log("Current chat updated:", currentChat);
     }
   }, [currentChat]);
-
-
-  const generateInitialReport = async (politician: CreateChatParams) => {
-    setIsResearching(true);
-    try {
-      const research = await fetchResearchByPoliticianAndPosition(politician.politician, politician.position);
-      console.log("Fetched research:", research);
-      
-      // TODO: handle the research data (e.g. update state, pass to context, etc.)
-      
-    } catch (error) {
-      console.error("Error fetching research:", error);
-      // Optionally set an error state or display a message to the user
-    }
-    setIsResearching(false);
-    // Create a new chat with the politician's name and position
-    createResearchChat(politician);
-
-  };
 
   const handleStartChat = () => {
     setShowModal(true);
@@ -211,21 +198,11 @@ export function EnhancedChatInterface() {
   const handlePoliticianSelect = (data: CreateChatParams) => {
     setShowModal(false);
     setSelectedPolitician(data);
-    setIsResearching(true);
     setChatStarted(true);
     
-    // Simulate research process (3 seconds)
-    setTimeout(() => {
-      generateInitialReport(data);
-      setIsResearching(false);
-    }, 3000);
+    // The createChat function in ChatContext will handle the research automatically
+    createChat(data, user?.refreshToken || null);
   };
-
-  // Helper to create a new chat with the correct title
-  const createResearchChat = (politician: CreateChatParams) => {
-    createChat(politician, user?.refreshToken || null)
-  };
-
 
   const handleSubmit = (e: React.FormEvent) => {
     console.log("Submit input:", input);
@@ -233,9 +210,9 @@ export function EnhancedChatInterface() {
     console.log("input.trim():", input.trim());
     console.log("isLoading:", isLoading);
     console.log("chatStarted:", chatStarted);
-    console.log("isResearching:", isResearching);
-    // removed !chatStarted check to allow input submission even if chat hasn't started
-    if (!input.trim() || isLoading || isResearching) return;
+    console.log("isResearchLoading:", isResearchLoading);
+    
+    if (!input.trim() || isLoading || isResearchLoading) return;
 
     console.log("user:", user);
     console.log("currentChat:", currentChat);
@@ -250,6 +227,18 @@ export function EnhancedChatInterface() {
         setIsLoading(false);
       }, 1000);
     } else {
+      // Handle guest user messages if needed
+      const userMessage: Message = {
+        id: Date.now(),
+        content: input,
+        role: "user",
+        timestamp: new Date()
+      };
+      setGuestMessages(prev => [...prev, userMessage]);
+      setInput("");
+      
+      // Generate response for guest users
+      generateResponse(input);
     }
   };
   
@@ -259,30 +248,19 @@ export function EnhancedChatInterface() {
     // Generate response about needing to connect to the API
     const responseContent = `I need to connect to the research API to provide accurate information about ${selectedPolitician.politician}. \n\nWhen the backend API integration is complete, I'll be able to search for specific information about their positions on ${question.includes("economy") ? "economic policies" : question.includes("healthcare") ? "healthcare reform" : question.includes("education") ? "education initiatives" : "various political issues"}.\n\nWould you like me to look up something else about this politician?`;
     
-    if (user && currentChat) {
-      // Authenticated user - add assistant response to saved chats
-      const assistantMessage: Omit<Message, "id"> = {
-        content: responseContent,
-        role: "assistant",
-        timestamp: new Date()
-      };
-      addMessageToCurrentChat(assistantMessage);
-    } else {
       // Guest user - use local state only
       const assistantMessage: Message = {
-        id: `guest-response-${Date.now()}`,
+      id: Date.now() + Math.random(),
         content: responseContent,
         role: "assistant",
         timestamp: new Date()
       };
       setGuestMessages(prev => [...prev, assistantMessage]);
-    }
   };
 
   // Start a new research session
   const handleNewResearch = () => {
     setChatStarted(false);
-    setIsResearching(false);
     setSelectedPolitician(null);
     if (user) {
       clearCurrentChat();
@@ -328,10 +306,10 @@ export function EnhancedChatInterface() {
       
       <div className="flex-1 p-4 overflow-y-auto">
         {/* Show chat history if currentChat exists and has messages */}
-        {currentChat && currentChat.qanda_set ? (
+        {currentChat && currentChat.qanda_set && currentChat.qanda_set.length > 0 ? (
           <div className="flex flex-col gap-4 px-4">
             {currentChat.qanda_set.map((qanda: any) => (
-              <div key={qanda.id} className="bg-white dark:bg-zinc-900 p-4 rounded-lg shadow">
+              <div key={qanda.id} className="space-y-2">
                 <ChatMessageComponent
                   content={qanda.question}
                   role="user"
@@ -365,10 +343,10 @@ export function EnhancedChatInterface() {
               </p>
             )}
           </div>
-        ) : isResearching ? (
+        ) : isResearchLoading ? (
           <ResearchLoadingIndicator />
         ) : (
-          // Guest user chat history
+          // Guest user chat history or empty chat
           <>
             {guestMessages.map((message, idx) => (
               <ChatMessageComponent
@@ -383,36 +361,29 @@ export function EnhancedChatInterface() {
         )}
       </div>
       
-      <div className="p-4 border-t mt-auto">
-        {/* Show input if a chat is selected or started */}
-        {(chatStarted || (user && currentChat)) && !isResearching ? (
-          <form onSubmit={handleSubmit} className="flex items-center gap-2">
+      {/* Input area */}
+      {(chatStarted || currentChat) && !isResearchLoading && (
+        <div className="p-4 border-t">
+          <form onSubmit={handleSubmit} className="flex gap-2">
             <input
               ref={inputRef}
               type="text"
               value={input}
-              onChange={e => setInput(e.target.value)}
-              placeholder={isLoading ? "Clara is thinking..." : "Ask about this politician..."}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={`Ask about ${selectedPolitician?.politician || currentPoliticianName || 'this politician'}...`}
+              className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary"
               disabled={isLoading}
-              className="flex-1 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60"
             />
-            <Button type="submit" size="icon" disabled={isLoading}>
-              {isLoading ? (
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-foreground" />
-              ) : (
+            <Button 
+              type="submit" 
+              disabled={!input.trim() || isLoading}
+              size="icon"
+            >
                 <SendIcon className="h-4 w-4" />
-              )}
-              <span className="sr-only">Send</span>
             </Button>
           </form>
-        ) : (
-          <div className="h-[42px] flex items-center justify-center">
-            {chatStarted && isResearching && (
-              <p className="text-sm text-muted-foreground">Preparing your research...</p>
-            )}
           </div>
         )}
-      </div>
     </Card>
   );
 } 

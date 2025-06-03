@@ -1,16 +1,19 @@
-import { Metadata } from "next";
+"use client";
+
 import { EnhancedChatInterface } from "@/components/chat/EnhancedChatInterface";
 import { ClientSidebar } from "@/components/chat/ClientSidebar";
+import { ResearchPanelWrapper } from "@/components/chat/ResearchPanelWrapper";
+import { useChat } from "@/context/ChatContext";
 
-export const metadata: Metadata = {
-  title: "Ask Clara | Election Awareness Portal",
-  description: "Ask questions about candidates, issues, and policies to find information that matches your interests.",
-};
-
-export default function AskPage() {
+function AskPageContent() {
+  const { researchData, isResearchLoading, currentChat, currentPoliticianName } = useChat();
+  
+  // Check if research panel should be shown
+  const shouldShowPanel = researchData || isResearchLoading || currentChat || currentPoliticianName;
+  
   return (
     <div className="container py-8">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight">Ask Clara</h1>
           <p className="text-lg text-muted-foreground mt-2">
@@ -22,11 +25,22 @@ export default function AskPage() {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <ClientSidebar />
-          <div className="md:col-span-3">
+        <div className={`grid grid-cols-1 gap-6 ${
+          shouldShowPanel 
+            ? 'lg:grid-cols-12' 
+            : 'lg:grid-cols-4'
+        }`}>
+          <div className={shouldShowPanel ? 'lg:col-span-3' : 'lg:col-span-1'}>
+            <ClientSidebar />
+          </div>
+          <div className={shouldShowPanel ? 'lg:col-span-6' : 'lg:col-span-3'}>
             <EnhancedChatInterface />
           </div>
+          {shouldShowPanel && (
+            <div className="lg:col-span-3">
+              <ResearchPanelWrapper />
+            </div>
+          )}
         </div>
         
         <div className="mt-8">
@@ -53,4 +67,8 @@ export default function AskPage() {
       </div>
     </div>
   );
+}
+
+export default function AskPage() {
+  return <AskPageContent />;
 } 

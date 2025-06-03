@@ -1,5 +1,5 @@
 // Define the expected response structure
-interface ResearchResponse {
+export interface ResearchResponse {
   id: number;
   position: string;
   background: string;
@@ -16,7 +16,7 @@ interface ResearchResponse {
 }
 
 // Function 1: Fetch by politician and position
-async function fetchResearchByPoliticianAndPosition(
+export async function fetchResearchByPoliticianAndPosition(
   politician: string,
   position: string
 ): Promise<ResearchResponse> {
@@ -38,7 +38,7 @@ async function fetchResearchByPoliticianAndPosition(
 }
 
 // Function 2: Fetch by report ID
-async function fetchResearchById(
+export async function fetchResearchById(
   reportId: number,
   includeSources: boolean = false
 ): Promise<ResearchResponse> {
