@@ -6,6 +6,7 @@ import axios from "axios";
 import { getAllChats, addChat, getChatQandA } from "../lib/api/chat"; // Adjust the import path as needed
 import { AddQuestionRequest } from "../lib/api/question"; // Adjust the import path as needed
 import { addQuestion } from "../lib/api/question"; // Adjust the import path as needed
+import { fetchResearchByPoliticianAndPosition, ResearchResponse } from "../lib/api/research"; // Import research API
 import { set } from "date-fns";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
@@ -39,6 +40,8 @@ export interface Chat {
   created_at: string;
 }
 
+// Use the ResearchResponse type from the API module
+export type ResearchData = ResearchResponse;
 
 interface ChatContextType {
   chats: Chat[];
@@ -51,6 +54,17 @@ interface ChatContextType {
   addMessageToCurrentChat: (question: string) => void;
   clearCurrentChat: () => void;
   clearAllChats: () => void;
+  
+  // Research panel functionality
+  researchData: ResearchData | null;
+  isResearchLoading: boolean;
+  isResearchPanelCollapsed: boolean;
+  currentPoliticianName: string | null;
+  currentPosition: string | null;
+  fetchResearchData: (politician: string, position: string) => Promise<void>;
+  toggleResearchPanel: () => void;
+  refreshResearchData: () => Promise<void>;
+  clearResearchData: () => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -60,6 +74,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [chats, setChats] = useState<Chat[]>([]);
   const [currentChat, setCurrentChatState] = useState<Chat | null>(null);
   const [isLoadingChats, setIsLoadingChats] = useState(true);
+  
+  // Research panel state
+  const [researchData, setResearchData] = useState<ResearchData | null>(null);
+  const [isResearchLoading, setIsResearchLoading] = useState(false);
+  const [isResearchPanelCollapsed, setIsResearchPanelCollapsed] = useState(false);
+  const [currentPoliticianName, setCurrentPoliticianName] = useState<string | null>(null);
+  const [currentPosition, setCurrentPosition] = useState<string | null>(null);
 
   // Helper function to convert API dates to Date objects
   const formatDates = (chat: any): Chat => ({
@@ -71,7 +92,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     created_at: chat.created_at,
   });
 
-
   // Helper function to get authorization header
   const getAuthHeader = async () => {
     const token = await getToken();
@@ -82,10 +102,52 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     };
   };
 
+  // Fetch research data
+  const fetchResearchData = async (politician: string, position: string): Promise<void> => {
+    setIsResearchLoading(true);
+    setCurrentPoliticianName(politician);
+    setCurrentPosition(position);
+    
+    try {
+      const data = await fetchResearchByPoliticianAndPosition(politician, position);
+      setResearchData(data);
+      console.log("Research data fetched:", data);
+    } catch (error) {
+      console.error("Failed to fetch research data:", error);
+      setResearchData(null);
+    } finally {
+      setIsResearchLoading(false);
+    }
+  };
+
+  // Toggle research panel collapse
+  const toggleResearchPanel = () => {
+    setIsResearchPanelCollapsed(!isResearchPanelCollapsed);
+  };
+
+  // Refresh research data
+  const refreshResearchData = async (): Promise<void> => {
+    if (currentPoliticianName && currentPosition) {
+      await fetchResearchData(currentPoliticianName, currentPosition);
+    }
+  };
+
+  // Clear research data (called when starting new chat)
+  const clearResearchData = () => {
+    setResearchData(null);
+    setCurrentPoliticianName(null);
+    setCurrentPosition(null);
+    setIsResearchLoading(false);
+  };
+
   // Load chats from API when user is authenticated
   useEffect(() => {
     const fetchChats = async () => {
-      if (!user) return;
+      if (!user) {
+        // If no user, set loading to false immediately
+        setIsLoadingChats(false);
+        return;
+      }
 
       console.log("Fetching chats for user:", user.username);
       console.log("User token:", user.refreshToken);
@@ -94,9 +156,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         const chats = await getAllChats(user.refreshToken || null);
         setChats(chats);
         console.log("Fetched chats:", chats);
-        setIsLoadingChats(false);
       } catch (err) {
         console.error("Failed to fetch chats:", err);
+      } finally {
+        setIsLoadingChats(false);
       }
     };
 
@@ -108,6 +171,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     params: CreateChatParams,
     token: string | null
   ): Promise<void> => {
+    // Clear previous research data when creating new chat
+    clearResearchData();
+    
     if (!token) {
       console.log('User not authenticated — cannot create persistent chat.');
       return;
@@ -119,6 +185,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       // Optionally update state or UI here
       setChats(prevChats => [...prevChats, formatDates(newChat)]);
       setCurrentChatState(formatDates(newChat)); // Set newly created chat as current
+      
+      // Automatically fetch research data for the new chat
+      await fetchResearchData(params.politician, params.position);
     } catch (error) {
       console.error('Error creating chat:', error);
     }
@@ -138,6 +207,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   
   // Set current chat
   const setCurrentChat = async (chatId: number | null, token: string) => {
+    // Clear research data when switching chats
+    clearResearchData();
+    
     // Only allow authenticated users to switch between saved chats
     if (!user) {
       console.log("Guest users cannot switch between persistent chats");
@@ -157,10 +229,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       console.log("Fetched Q&A:", qanda);
       chat.qanda_set = qanda; // Update the chat's Q&A set
       setCurrentChatState(chat); // Update state with fetched Q&A
+      
+      // Fetch research data for this chat's politician
+      // Note: We need to determine position from the chat data
+      // For now, we'll use a default position or extract from chat data
+      if (chat.politician) {
+        await fetchResearchData(chat.politician, "President"); // Default position
+      }
     } catch (err) {
       console.error(err);
     }
-    
 
     console.log("Current chat set to:", chat);
   };
@@ -199,35 +277,30 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
       // currentChat.qanda_set.push({
       //   id: response.id,
-      //   chat: response.chat,
-      //   question: response.question,
+      //   chat: currentChat.id,
+      //   question: question,
       //   answer: response.answer,
-      //   created_at: response.created_at,
+      //   created_at: new Date().toISOString()
       // });
       
-      console.log("Message added with answer:", response);
-
-    } catch (err) {
-      console.error("Error adding message:", err);
+      console.log("Message added to current chat:", response);
+    } catch (error) {
+      console.error("Failed to add message to chat:", error);
     }
   };
   
   // Clear current chat
   const clearCurrentChat = () => {
-    // Only allow authenticated users to clear their current chat
-    if (!user) {
-      console.log("Guest users cannot clear persistent chats");
-      return;
-    }
-    
     setCurrentChatState(null);
+    clearResearchData(); // Clear research data when clearing chat
   };
-  
-  // Clear all chats from storage and state
+
+  // Clear all chats
   const clearAllChats = async () => {
+    // Only allow authenticated users to clear chats
     
   };
-  
+
   return (
     <ChatContext.Provider
       value={{
@@ -240,7 +313,18 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setCurrentChat,
         addMessageToCurrentChat,
         clearCurrentChat,
-        clearAllChats
+        clearAllChats,
+        
+        // Research panel functionality
+        researchData,
+        isResearchLoading,
+        isResearchPanelCollapsed,
+        currentPoliticianName,
+        currentPosition,
+        fetchResearchData,
+        toggleResearchPanel,
+        refreshResearchData,
+        clearResearchData,
       }}
     >
       {children}
