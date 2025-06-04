@@ -126,6 +126,10 @@ export function ResearchPanelWrapper() {
     return null; // Don't render anything if no research is active
   }
 
+  // Get politician data from either current chat or research data
+  const politicianImage = currentChat?.politician_image || researchData?.politician_image || undefined;
+  const politicianParty = currentChat?.politician_party || researchData?.politician_party || undefined;
+
   return (
     <>
       {showQuickResearchModal && (
@@ -143,6 +147,8 @@ export function ResearchPanelWrapper() {
         onRefreshResearch={refreshResearchData}
         onStartResearch={handleStartResearch}
         politicianName={currentPoliticianName || undefined}
+        politicianImage={politicianImage}
+        politicianParty={politicianParty}
       />
     </>
   );

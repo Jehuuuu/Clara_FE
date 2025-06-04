@@ -2,6 +2,49 @@
 @tailwind components;
 @tailwind utilities;
 
+.markdown > * {
+  all: revert;
+}
+
+/* Add to your globals.css */
+ul {
+  list-style: disc !important;
+  padding-left: 2rem !important;
+}
+
+ol {
+  list-style: decimal !important;
+  padding-left: 2rem !important;
+}
+
+/* For nested lists */
+ul ul {
+  list-style: circle !important;
+}
+
+ul ul ul {
+  list-style: square !important;
+}
+
+/* Add these rules for better spacing in Markdown content */
+.prose p {
+  @apply text-gray-800 leading-relaxed mb-6; /* Increased bottom margin from default */
+}
+
+/* Add more spacing between other elements */
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+  @apply mt-8 mb-4;
+}
+
+.prose ul, .prose ol {
+  @apply my-3;
+}
+
+/* Add space between list items */
+.prose li {
+  @apply mb-1;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -73,4 +116,415 @@
   body {
     @apply bg-background text-foreground;
   }
-} 
+}
+
+/* Layout Components */
+.app-container {
+  @apply h-full bg-gray-50 flex flex-col overflow-hidden;
+}
+
+.main-layout {
+  @apply flex h-full overflow-hidden;
+}
+
+.sidebar-container {
+  @apply bg-white border-r border-gray-200 flex-shrink-0 transition-all duration-300 shadow-sm;
+}
+
+.chat-container {
+  @apply flex-1 bg-gray-50 flex flex-col min-w-0 h-full;
+}
+
+.research-panel-container {
+  @apply bg-white border-l border-gray-200 flex-shrink-0 shadow-sm h-full;
+}
+
+.research-expanded {
+  width: 100%;
+}
+
+.research-collapsed {
+  width: 100%;
+}
+
+/* Chat Interface */
+.chat-interface {
+  @apply flex flex-col w-full h-full bg-white;
+}
+
+.chat-header {
+  @apply p-6 border-b border-gray-200 bg-white flex-shrink-0;
+}
+
+.chat-header-content {
+  @apply flex items-center justify-between max-w-2xl mx-auto;
+}
+
+.chat-messages-area {
+  @apply flex-1 overflow-y-auto bg-gray-50 min-h-0;
+}
+
+.chat-messages-container {
+  @apply max-w-2xl mx-auto;
+}
+
+.chat-input-area {
+  @apply border-t border-gray-200 bg-white p-4 flex-shrink-0;
+}
+
+.chat-input-container {
+  @apply max-w-2xl mx-auto;
+}
+
+/* Research Panel */
+.research-panel {
+  @apply h-full transition-all duration-300 flex flex-col;
+}
+
+.research-panel.expanded {
+  @apply w-full;
+}
+
+.research-panel.collapsed {
+  @apply w-16; /* Fixed width when collapsed as overlay */
+}
+
+.research-panel-header {
+  @apply p-3 border-b border-gray-200 flex items-center;
+}
+
+.research-panel-header:has(.research-header-title) {
+  @apply justify-between bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 shadow-lg;
+}
+
+.research-panel-header:not(:has(.research-header-title)) {
+  @apply justify-center bg-white; /* Center the button when collapsed */
+}
+
+.research-header-title {
+  @apply flex-1 mr-4;
+}
+
+.research-collapsed-content {
+  @apply flex-1 flex flex-col items-center justify-start py-4;
+}
+
+.research-collapsed-icon {
+  @apply p-3 rounded-full bg-gray-100;
+}
+
+.research-panel-content {
+  @apply flex-1 overflow-y-auto bg-gradient-to-b from-gray-50 to-gray-100;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.research-panel-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.research-panel-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.research-panel-content::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 3px;
+}
+
+.research-panel-content::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
+}
+
+.research-loading-state {
+  @apply flex flex-col items-center justify-center h-full py-12;
+}
+
+.research-document-container {
+  @apply space-y-6 p-6;
+}
+
+.research-document-header {
+  @apply bg-white rounded-lg shadow-sm overflow-hidden;
+}
+
+.research-document-title {
+  @apply bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6;
+}
+
+.research-politician-profile {
+  @apply transition-all duration-200 hover:shadow-lg;
+}
+
+.research-document-metadata {
+  @apply bg-white rounded-lg shadow-sm p-4;
+}
+
+.research-sections-container {
+  @apply space-y-4;
+}
+
+.research-section-card {
+  @apply transition-all duration-200;
+}
+
+.research-section-header {
+  @apply transition-all duration-150;
+}
+
+.research-section-header:hover {
+  @apply transform translate-x-1;
+}
+
+.research-section-content {
+  @apply animation-fadeIn;
+}
+
+.research-document-footer {
+  @apply transition-all duration-200 hover:shadow-lg;
+}
+
+.research-empty-state {
+  @apply flex flex-col items-center justify-center h-full py-12 px-6 text-center;
+}
+
+/* Custom animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animation-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Typography improvements for research content */
+.prose p {
+  @apply text-gray-800 leading-relaxed;
+}
+
+.prose p:first-child {
+  @apply font-medium;
+}
+
+/* Override Tailwind typography's first paragraph styling */
+.prose p:first-of-type {
+  font-weight: normal !important;
+  font-size: inherit !important;
+  margin-top: 0 !important;
+}
+
+/* Enhanced status badges */
+.status-badge-live {
+  @apply relative overflow-hidden;
+}
+
+.status-badge-live::before {
+  content: '';
+  @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .research-expanded {
+    width: 600px;
+  }
+  
+  .chat-messages-container,
+  .chat-header-content,
+  .chat-input-container {
+    @apply max-w-xl;
+  }
+}
+
+@media (max-width: 768px) {
+  .research-expanded {
+    width: 400px;
+  }
+  
+  .chat-messages-container,
+  .chat-header-content,
+  .chat-input-container {
+    @apply max-w-lg px-4;
+  }
+}
+
+/* Sidebar Components */
+.sidebar-collapsed {
+  @apply h-full w-[60px] flex flex-col transition-all duration-300;
+}
+
+.sidebar-expanded {
+  @apply h-full w-[280px] flex flex-col transition-all duration-300;
+}
+
+.sidebar-collapsed-top {
+  @apply p-2 flex flex-col space-y-2;
+}
+
+.sidebar-toggle-btn {
+  @apply h-10 w-10 p-0 hover:bg-gray-100 rounded-md;
+}
+
+.sidebar-new-research-btn {
+  @apply h-10 w-10 p-0 hover:bg-gray-100 rounded-md;
+}
+
+.sidebar-header {
+  @apply p-3 border-b border-gray-200 flex justify-start;
+}
+
+.sidebar-close-btn {
+  @apply h-10 w-10 p-0 hover:bg-gray-100 rounded-md;
+}
+
+.sidebar-actions {
+  @apply p-3 space-y-2 border-b border-gray-200;
+}
+
+.sidebar-new-research-full {
+  @apply w-full justify-start;
+}
+
+.sidebar-search-btn {
+  @apply w-full justify-start;
+}
+
+.sidebar-content {
+  @apply flex-1 overflow-hidden;
+}
+
+.sidebar-guest-content {
+  @apply flex-1 flex flex-col items-center justify-center p-4 text-center;
+}
+
+/* Chat Browser Modal - ChatGPT-style interface */
+.modal-overlay {
+  @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4;
+}
+
+.chat-browser-modal {
+  @apply w-full max-w-md max-h-[80vh] flex flex-col;
+}
+
+.chat-browser-container {
+  @apply flex flex-col h-full;
+}
+
+/* Search Section - Top priority visual element */
+.chat-browser-search-section {
+  @apply flex items-center gap-2 p-4 border-b border-gray-200;
+}
+
+.chat-browser-search-input {
+  @apply flex-1 px-3 py-2 text-sm rounded-lg 
+         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+         placeholder:text-gray-500;
+}
+
+.chat-browser-close-button {
+  @apply w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 
+         hover:bg-gray-100 rounded-md transition-colors text-lg font-medium;
+}
+
+/* Actions Section - Secondary priority */
+.chat-browser-actions-section {
+  @apply px-4 border-b border-gray-200;
+}
+
+.chat-browser-new-chat-button {
+  @apply w-full flex items-center justify-start px-3 py-2 text-sm font-medium 
+         text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors;
+}
+
+/* Content Area - Main browsing interface */
+.chat-browser-content-area {
+  @apply flex-1 overflow-y-auto p-4 space-y-2 min-h-0;
+}
+
+/* Date Section Groupings - Clear visual hierarchy */
+.chat-browser-date-section {
+  @apply space-y-2;
+}
+
+.chat-browser-date-title {
+  @apply text-xs font-semibold text-gray-500 uppercase tracking-wider px-2 mb-2;
+}
+
+.chat-browser-chat-list {
+  @apply space-y-1;
+}
+
+/* Individual Chat Items - Compact and scannable */
+.chat-browser-item {
+  @apply w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 
+         transition-colors cursor-pointer;
+}
+
+.chat-browser-item-content {
+  @apply flex flex-col gap-1;
+}
+
+.chat-browser-politician-name {
+  @apply text-sm font-medium text-gray-900 truncate group-hover:text-gray-700;
+}
+
+.chat-browser-exchange-count {
+  @apply text-xs text-gray-500 group-hover:text-gray-600;
+}
+
+/* Empty State - Helpful messaging */
+.chat-browser-empty-state {
+  @apply flex items-center justify-center h-32 text-center;
+}
+
+.chat-browser-empty-state p {
+  @apply text-sm text-gray-500;
+}
+
+/* Resizable Split Pane Styles */
+.resizable-split-pane {
+  @apply relative;
+}
+
+.split-pane-resizer {
+  @apply relative transition-all duration-150;
+}
+
+.split-pane-resizer:hover {
+  @apply bg-blue-100;
+}
+
+.split-pane-resizer:hover .resizer-indicator {
+  @apply opacity-80;
+}
+
+.split-pane-resizer.dragging {
+  @apply bg-blue-500 shadow-lg;
+}
+
+.split-pane-resizer.dragging .resizer-indicator {
+  @apply opacity-100;
+}
+
+/* Prevent selection during drag */
+.split-pane-resizer.dragging,
+.split-pane-resizer.dragging * {
+  @apply select-none;
+}

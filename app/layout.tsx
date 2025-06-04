@@ -2,7 +2,6 @@
 
 import React from "react";
 import { Navbar } from "@/components/common/Navbar";
-import { Footer } from "@/components/common/Footer";
 import { Toasts } from "@/components/common/Toasts";
 import { Modal } from "@/components/common/Modal";
 import { UIProvider } from "@/context/UIContext";
@@ -37,10 +36,9 @@ export default function RootLayout({
               <BookmarkProvider>
                 <QuizProvider>
                   <ChatProvider>
-                    <div className="flex min-h-screen flex-col">
+                    <div className="h-screen flex flex-col overflow-hidden">
                       <Navbar />
-                      <main className="flex-1">{children}</main>
-                      <Footer />
+                      <main className="flex-1 min-h-0">{children}</main>
                       <Toasts />
                       <Modal />
                     </div>

@@ -5,7 +5,7 @@ import { Github } from "lucide-react";
 export function Footer() {
   return (
     <footer className="border-t bg-background">
-      <div className="container px-4 py-8 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div className="">
         <div className="flex flex-col items-center md:items-start">
           <div className="text-lg font-bold">Clara</div>
           <p className="text-sm text-muted-foreground mt-1">
