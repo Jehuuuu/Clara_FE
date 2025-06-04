@@ -31,9 +31,9 @@ export function QuizResults({ results, onReset }: QuizResultsProps) {
     <Card className="max-w-3xl mx-auto p-6">
       <div className="space-y-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">Your Candidate Alignment Results</h1>
+          <h1 className="text-2xl font-bold">Your Politician Alignment Results</h1>
           <p className="text-gray-600 mt-2">
-            Based on your answers, here's how you align with the candidates
+            Based on your answers, here's how you align with the politicians
           </p>
         </div>
 
@@ -72,10 +72,10 @@ export function QuizResults({ results, onReset }: QuizResultsProps) {
                   
                   <div className="mt-4">
                     <Link 
-                      href={`/candidate/${result.candidateId}`} 
+                      href={`/politician/${result.candidateId}`} 
                       className="text-blue-600 hover:underline text-sm"
                     >
-                      View candidate profile →
+                      View politician profile →
                     </Link>
                   </div>
                 </div>
@@ -88,9 +88,9 @@ export function QuizResults({ results, onReset }: QuizResultsProps) {
           <Button onClick={onReset} variant="outline">
             Take Quiz Again
           </Button>
-          <Link href="/candidates">
+          <Link href="/politicians">
             <Button variant="default">
-              View All Candidates
+              View All Politicians
             </Button>
           </Link>
         </div>

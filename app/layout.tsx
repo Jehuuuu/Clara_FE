@@ -5,7 +5,7 @@ import { Navbar } from "@/components/common/Navbar";
 import { Toasts } from "@/components/common/Toasts";
 import { Modal } from "@/components/common/Modal";
 import { UIProvider } from "@/context/UIContext";
-import { CandidateProvider } from "@/context/CandidateContext";
+import { PoliticianProvider } from "@/context/PoliticianContext";
 import { BookmarkProvider } from "@/context/BookmarkContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { QuizProvider } from "@/context/QuizContext";
@@ -26,13 +26,13 @@ export default function RootLayout({
         <title>Clara | Election Awareness Portal</title>
         <meta
           name="description"
-          content="Empowering voters with information about candidates and issues"
+          content="Empowering voters with information about politicians and issues"
         />
       </head>
       <body>
         <AuthProvider>
           <UIProvider>
-            <CandidateProvider>
+            <PoliticianProvider>
               <BookmarkProvider>
                 <QuizProvider>
                   <ChatProvider>
@@ -45,7 +45,7 @@ export default function RootLayout({
                   </ChatProvider>
                 </QuizProvider>
               </BookmarkProvider>
-            </CandidateProvider>
+            </PoliticianProvider>
           </UIProvider>
         </AuthProvider>
       </body>

@@ -5,12 +5,12 @@ import { useSearchParams } from "next/navigation";
 import { Search, Filter, X, ArrowRightLeft, Star } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { Badge } from "@/components/common/Badge";
-import { useCandidates } from "@/context/CandidateContext";
+import { usePoliticians } from "@/context/PoliticianContext";
 import { useDebounce } from "@/hooks/useDebounce";
 import Link from "next/link";
 import Image from "next/image";
 import { Card } from "@/components/common/Card";
-import { Candidate } from "@/lib/dummy-data";
+import { Politician } from "@/lib/types";
 
 // Define the categories to display based on political positions
 const POSITION_CATEGORIES = [
@@ -27,18 +27,18 @@ const POSITION_CATEGORIES = [
   "Other"
 ];
 
-// Compact Candidate Card component for the grouped layout - matching My Picks exactly
-const CompactCandidateCard = ({ 
-  candidate, 
+// Compact Politician Card component for the grouped layout - matching My Picks exactly
+const CompactPoliticianCard = ({ 
+  politician, 
   isSelected, 
   onSelect 
 }: { 
-  candidate: Candidate; 
+  politician: Politician; 
   isSelected: boolean; 
   onSelect: () => void;
 }) => {
   return (
-    <Link href={`/candidate/${candidate.id}`}>
+    <Link href={`/politician/${politician.id}`}>
       <Card className={`rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden transition-all hover:shadow-md ${isSelected ? 'ring-2 ring-primary' : ''} w-full aspect-[2/3] relative flex flex-col`}>
         <div 
           className="absolute top-1 right-1 z-10"
@@ -55,21 +55,21 @@ const CompactCandidateCard = ({
         
         <div className="relative w-full h-16 overflow-hidden">
           <Image
-            src={candidate.image || "/placeholder-candidate.jpg"}
-            alt={candidate.name}
+            src={politician.image || politician.image_url || "/placeholder-politician.jpg"}
+            alt={politician.name}
             fill
             className="object-cover"
           />
         </div>
         
         <div className="p-1 flex-grow flex flex-col text-[10px]">
-          <h3 className="font-medium truncate">{candidate.name}</h3>
-          <p className="text-muted-foreground truncate">{candidate.party}</p>
+          <h3 className="font-medium truncate">{politician.name}</h3>
+          <p className="text-muted-foreground truncate">{politician.party || 'No party'}</p>
           
-          {/* Key stance highlight */}
-          {Object.entries(candidate.issues)[0] && (
+          {/* Show position if available */}
+          {politician.position && (
             <p className="mt-auto line-clamp-1 text-muted-foreground italic">
-              {Object.keys(candidate.issues)[0]}: {Object.values(candidate.issues)[0].stance}
+              {politician.position}
             </p>
           )}
         </div>
@@ -78,23 +78,23 @@ const CompactCandidateCard = ({
   );
 };
 
-export default function CandidatesPage() {
+export default function PoliticiansPage() {
   const searchParams = useSearchParams();
   const { 
-    candidates, 
+    politicians, 
     issues, 
     isLoading, 
     filter, 
-    selectedCandidates,
-    selectCandidate,
-    unselectCandidate,
+    selectedPoliticians,
+    selectPolitician,
+    unselectPolitician,
     setSearchTerm, 
     setIssueFilter,
     setPartyFilter,
     clearFilters,
-    getFilteredCandidates,
+    getFilteredPoliticians,
     getUniqueParties,
-  } = useCandidates();
+  } = usePoliticians();
   
   // Local search state to debounce
   const [localSearchTerm, setLocalSearchTerm] = useState(searchParams.get("search") || "");
@@ -117,47 +117,47 @@ export default function CandidatesPage() {
     }
   }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
   
-  const filteredCandidates = getFilteredCandidates();
+  const filteredPoliticians = getFilteredPoliticians();
   
   // Toggle sidebar on mobile
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
-  // Group candidates by position
-  const getCandidatesByPosition = () => {
-    const groupedCandidates = {} as Record<string, Candidate[]>;
+  // Group politicians by position
+  const getPoliticiansByPosition = () => {
+    const groupedPoliticians: Record<string, Politician[]> = {};
     
     // Initialize categories
     POSITION_CATEGORIES.forEach(position => {
-      groupedCandidates[position] = [];
+      groupedPoliticians[position] = [];
     });
     
-    // Group candidates
-    filteredCandidates.forEach(candidate => {
+    // Group politicians
+    filteredPoliticians.forEach((politician: Politician) => {
       // Map position to an existing category, or use "Other"
-      const position = POSITION_CATEGORIES.includes(candidate.position) 
-        ? candidate.position
+      const position = politician.position && POSITION_CATEGORIES.includes(politician.position) 
+        ? politician.position
         : "Other";
         
-      groupedCandidates[position].push(candidate);
+      groupedPoliticians[position].push(politician);
     });
     
     // Filter out empty categories
-    return Object.entries(groupedCandidates)
-      .filter(([_, candidates]) => candidates.length > 0)
-      .map(([position, candidates]) => ({
+    return Object.entries(groupedPoliticians)
+      .filter(([_, politicians]) => politicians.length > 0)
+      .map(([position, politicians]) => ({
         position,
-        candidates
+        politicians
       }));
   };
   
-  const positionGroups = getCandidatesByPosition();
+  const positionGroups = getPoliticiansByPosition();
 
-  // Handle candidate selection
-  const handleCandidateSelect = (id: string) => {
-    if (selectedCandidates.includes(id)) {
-      unselectCandidate(id);
+  // Handle politician selection
+  const handlePoliticianSelect = (id: string) => {
+    if (selectedPoliticians.includes(id)) {
+      unselectPolitician(id);
     } else {
-      selectCandidate(id);
+      selectPolitician(id);
     }
   };
 
@@ -207,7 +207,7 @@ export default function CandidatesPage() {
             <div>
               <h3 className="text-sm font-medium mb-2">Parties</h3>
               <div className="space-y-2">
-                {uniqueParties.map(party => (
+                {uniqueParties.map((party: string) => (
                   <div 
                     key={party} 
                     className="flex items-center"
@@ -242,7 +242,7 @@ export default function CandidatesPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search candidates by name or party"
+              placeholder="Search politicians by name or party"
               className="w-full pl-10 pr-10 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary"
               value={localSearchTerm}
               onChange={(e) => setLocalSearchTerm(e.target.value)}
@@ -266,9 +266,9 @@ export default function CandidatesPage() {
           {/* Results */}
           <div>
             <div className="flex justify-between items-center mb-4">
-              <h1 className="text-2xl font-bold">Candidates</h1>
+              <h1 className="text-2xl font-bold">Politicians</h1>
               <div className="text-sm text-muted-foreground">
-                {filteredCandidates.length} {filteredCandidates.length === 1 ? 'candidate' : 'candidates'} found
+                {filteredPoliticians.length} {filteredPoliticians.length === 1 ? 'politician' : 'politicians'} found
               </div>
             </div>
             
@@ -298,20 +298,20 @@ export default function CandidatesPage() {
               </div>
             )}
             
-            {/* Compare Button (if candidates selected) */}
-            {selectedCandidates.length > 0 && (
+            {/* Compare Button (if politicians selected) */}
+            {selectedPoliticians.length > 0 && (
               <div className="flex items-center justify-end mb-4">
                 <span className="mr-2 text-sm text-muted-foreground">
-                  {selectedCandidates.length}/2 selected
+                  {selectedPoliticians.length}/2 selected
                 </span>
                 <Button
-                  disabled={selectedCandidates.length < 2}
-                  asChild={selectedCandidates.length === 2}
+                  disabled={selectedPoliticians.length < 2}
+                  asChild={selectedPoliticians.length === 2}
                 >
-                  {selectedCandidates.length === 2 ? (
-                    <Link href={`/compare?ids=${selectedCandidates.join(',')}`}>
+                  {selectedPoliticians.length === 2 ? (
+                    <Link href={`/compare?ids=${selectedPoliticians.join(',')}`}>
                       <ArrowRightLeft className="h-4 w-4 mr-2" />
-                      Compare Candidates
+                      Compare Politicians
                     </Link>
                   ) : (
                     <>
@@ -324,11 +324,11 @@ export default function CandidatesPage() {
             )}
             
             {isLoading ? (
-              <div className="text-center py-12">Loading candidates...</div>
-            ) : filteredCandidates.length === 0 ? (
+              <div className="text-center py-12">Loading politicians...</div>
+            ) : filteredPoliticians.length === 0 ? (
               <div className="text-center py-12 border rounded-lg">
                 <p className="text-muted-foreground">
-                  No candidates found matching your criteria.
+                  No politicians found matching your criteria.
                 </p>
                 <Button
                   variant="link"
@@ -346,18 +346,18 @@ export default function CandidatesPage() {
                       <h2 className="text-base font-semibold border-b pb-1">
                         {group.position}
                         <span className="text-xs font-normal text-muted-foreground ml-2">
-                          ({group.candidates.length})
+                          ({group.politicians.length})
                         </span>
                       </h2>
                     </div>
                     
                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
-                      {group.candidates.map(candidate => (
-                        <CompactCandidateCard
-                          key={candidate.id}
-                          candidate={candidate}
-                          isSelected={selectedCandidates.includes(candidate.id)}
-                          onSelect={() => handleCandidateSelect(candidate.id)}
+                      {group.politicians.map(politician => (
+                        <CompactPoliticianCard
+                          key={politician.id}
+                          politician={politician}
+                          isSelected={selectedPoliticians.includes(politician.id.toString())}
+                          onSelect={() => handlePoliticianSelect(politician.id.toString())}
                         />
                       ))}
                     </div>

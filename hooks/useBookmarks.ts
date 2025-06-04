@@ -1,72 +1,92 @@
 import { useBookmarks as useBookmarksContext } from "@/context/BookmarkContext";
-import { useCandidates } from "@/context/CandidateContext";
-import { Candidate } from "@/lib/dummy-data";
+import { usePoliticians } from "@/context/PoliticianContext";
+
+// Define politician interface for this hook
+interface Politician {
+  id: number;
+  name: string;
+  image_url: string | null;
+  created_at: string;
+  latest_research: {
+    id: number;
+    position: string;
+    background: string;
+    accomplishments: string;
+    criticisms: string;
+    summary: string;
+    sources: any;
+    created_at: string;
+    updated_at: string;
+    politician_image: string | null;
+    politician_party: string | null;
+  } | null;
+}
 
 /**
- * Enhanced hook for working with bookmarks while accessing full candidate data
+ * Enhanced hook for working with bookmarks while accessing full politician data
  */
 export function useBookmarkData() {
   const bookmarkContext = useBookmarksContext();
-  const candidateContext = useCandidates();
+  const politicianContext = usePoliticians();
   
   /**
-   * Get full candidate objects for all bookmarked candidates
+   * Get full politician objects for all selected politicians
    */
-  const getBookmarkedCandidatesData = (): Candidate[] => {
-    return candidateContext.candidates.filter(candidate => 
-      bookmarkContext.bookmarkedCandidates.includes(candidate.id)
+  const getSelectedPoliticiansData = (): Politician[] => {
+    return politicianContext.politicians.filter(politician => 
+      politicianContext.selectedPoliticians.includes(politician.id)
     );
   };
   
   /**
-   * Get full candidate objects for a saved comparison
+   * Get full politician objects for a saved comparison
    */
-  const getComparisonCandidatesData = (comparisonId: string): [Candidate | undefined, Candidate | undefined] | null => {
+  const getComparisonPoliticiansData = (comparisonId: string): [Politician | undefined, Politician | undefined] | null => {
     const comparison = bookmarkContext.savedComparisons.find(comp => comp.id === comparisonId);
     if (!comparison) return null;
     
-    const candidateA = candidateContext.candidates.find(c => c.id === comparison.candidateIds[0]);
-    const candidateB = candidateContext.candidates.find(c => c.id === comparison.candidateIds[1]);
+    const politicianA = politicianContext.politicians.find(p => p.id.toString() === comparison.candidateIds[0]);
+    const politicianB = politicianContext.politicians.find(p => p.id.toString() === comparison.candidateIds[1]);
     
-    return [candidateA, candidateB];
+    return [politicianA, politicianB];
   };
   
   /**
-   * Get all saved comparisons with full candidate data
+   * Get all saved comparisons with full politician data
    */
   const getSavedComparisonsWithData = (): Array<{
     id: string;
-    candidates: [Candidate | undefined, Candidate | undefined];
+    politicians: [Politician | undefined, Politician | undefined];
   }> => {
     return bookmarkContext.savedComparisons.map(comparison => ({
       id: comparison.id,
-      candidates: [
-        candidateContext.candidates.find(c => c.id === comparison.candidateIds[0]),
-        candidateContext.candidates.find(c => c.id === comparison.candidateIds[1])
-      ] as [Candidate | undefined, Candidate | undefined]
+      politicians: [
+        politicianContext.politicians.find(p => p.id.toString() === comparison.candidateIds[0]),
+        politicianContext.politicians.find(p => p.id.toString() === comparison.candidateIds[1])
+      ] as [Politician | undefined, Politician | undefined]
     }));
   };
   
   /**
-   * Get quiz result with full candidate data
+   * Get quiz result with full politician data
    */
-  const getQuizResultWithCandidateData = () => {
+  const getQuizResultWithPoliticianData = () => {
     if (!bookmarkContext.savedQuizResult) return null;
     
     return {
       date: bookmarkContext.savedQuizResult.date,
       topMatches: bookmarkContext.savedQuizResult.topMatches.map(match => ({
         ...match,
-        candidate: candidateContext.candidates.find(c => c.id === match.candidateId)
+        politician: politicianContext.politicians.find(p => p.id.toString() === match.candidateId)
       }))
     };
   };
   
   return {
     ...bookmarkContext,
-    getBookmarkedCandidatesData,
-    getComparisonCandidatesData,
+    getSelectedPoliticiansData,
+    getComparisonPoliticiansData,
     getSavedComparisonsWithData,
-    getQuizResultWithCandidateData
+    getQuizResultWithPoliticianData
   };
 } 

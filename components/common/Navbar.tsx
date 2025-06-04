@@ -12,7 +12,7 @@ import { useAuth } from "@/context/AuthContext";
 
 const navItems = [
   { label: "Ask", href: "/ask" },
-  { label: "Candidates", href: "/candidates" },
+  { label: "Politicians", href: "/politicians" },
   { label: "Issues", href: "/issues/economy" },
   { label: "Pulse", href: "/quiz" }
 ];

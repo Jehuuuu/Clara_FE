@@ -1,170 +1,157 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { Candidate, QuizQuestion, getCandidates, getQuizQuestions } from "@/lib/dummy-data";
+import React, { createContext, useContext, useState, ReactNode } from "react";
+
+interface QuizQuestion {
+  id: string;
+  question: string;
+  options: {
+    id: string;
+    text: string;
+    alignment: {
+      [candidateId: string]: number;
+    };
+  }[];
+}
+
+interface QuizAnswer {
+  questionId: string;
+  selectedOptionId: string;
+}
+
+interface QuizResult {
+  candidateId: string;
+  alignmentScore: number;
+}
 
 interface QuizContextType {
-  // Data
-  questions: QuizQuestion[];
-  candidates: Candidate[];
-  isLoading: boolean;
-  error: string | null;
-  
   // Quiz state
+  questions: QuizQuestion[];
+  answers: QuizAnswer[];
   currentQuestionIndex: number;
-  answers: Record<string, string>;
   isCompleted: boolean;
   
   // Quiz actions
-  startQuiz: () => void;
   answerQuestion: (questionId: string, optionId: string) => void;
-  nextQuestion: () => void;
-  previousQuestion: () => void;
-  completeQuiz: () => void;
+  goToNextQuestion: () => void;
+  goToPreviousQuestion: () => void;
+  goToQuestion: (index: number) => void;
   resetQuiz: () => void;
   
   // Results
-  getResults: () => AlignmentResult[];
-}
-
-export interface AlignmentResult {
-  candidateId: string;
-  candidateName: string;
-  candidateParty: string;
-  candidateImage: string;
-  alignmentScore: number;
+  getResults: () => QuizResult[];
+  getProgress: () => number;
 }
 
 const QuizContext = createContext<QuizContextType | undefined>(undefined);
 
 export function QuizProvider({ children }: { children: ReactNode }) {
-  // State
+  // Quiz state
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
-  const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(-1); // -1 means quiz not started
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [isCompleted, setIsCompleted] = useState<boolean>(false);
+  const [answers, setAnswers] = useState<QuizAnswer[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [isCompleted, setIsCompleted] = useState(false);
 
-  // Fetch data
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        setIsLoading(true);
-        const [questionsData, candidatesData] = await Promise.all([
-          getQuizQuestions(),
-          getCandidates(),
-        ]);
-
-        setQuestions(questionsData);
-        setCandidates(candidatesData);
-      } catch (error) {
-        setError("Failed to fetch quiz data");
-        console.error(error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchData();
+  // Load quiz questions from API (placeholder for now)
+  React.useEffect(() => {
+    // TODO: Implement quiz questions loading from API
+    // For now, we'll keep an empty array
+    setQuestions([]);
   }, []);
 
-  // Quiz actions
-  const startQuiz = () => {
-    setCurrentQuestionIndex(0);
-    setAnswers({});
-    setIsCompleted(false);
-  };
-
   const answerQuestion = (questionId: string, optionId: string) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questionId]: optionId
-    }));
+    setAnswers(prev => {
+      const existingAnswerIndex = prev.findIndex(answer => answer.questionId === questionId);
+      const newAnswer = { questionId, selectedOptionId: optionId };
+      
+      if (existingAnswerIndex >= 0) {
+        // Update existing answer
+        const newAnswers = [...prev];
+        newAnswers[existingAnswerIndex] = newAnswer;
+        return newAnswers;
+      } else {
+        // Add new answer
+        return [...prev, newAnswer];
+      }
+    });
   };
 
-  const nextQuestion = () => {
+  const goToNextQuestion = () => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
+    } else {
+      setIsCompleted(true);
     }
   };
 
-  const previousQuestion = () => {
+  const goToPreviousQuestion = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(prev => prev - 1);
     }
   };
 
-  const completeQuiz = () => {
-    setIsCompleted(true);
+  const goToQuestion = (index: number) => {
+    if (index >= 0 && index < questions.length) {
+      setCurrentQuestionIndex(index);
+    }
   };
 
   const resetQuiz = () => {
-    setCurrentQuestionIndex(-1);
-    setAnswers({});
+    setAnswers([]);
+    setCurrentQuestionIndex(0);
     setIsCompleted(false);
   };
 
-  // Calculate alignment results
-  const getResults = (): AlignmentResult[] => {
-    if (!isCompleted || Object.keys(answers).length === 0) {
+  const getResults = (): QuizResult[] => {
+    if (questions.length === 0 || answers.length === 0) {
       return [];
     }
 
-    // Initialize scores for each candidate
-    const candidateScores: Record<string, number> = {};
-    candidates.forEach(candidate => {
-      candidateScores[candidate.id] = 0;
-    });
+    // Calculate alignment scores
+    const candidateScores: { [candidateId: string]: number } = {};
+    const totalPossibleScore: { [candidateId: string]: number } = {};
 
-    // Calculate total possible points (for percentage calculation)
-    const totalPossiblePoints = Object.keys(answers).length * 100;
-
-    // Calculate scores based on user answers
-    Object.entries(answers).forEach(([questionId, selectedOptionId]) => {
-      const question = questions.find(q => q.id === questionId);
+    answers.forEach(answer => {
+      const question = questions.find(q => q.id === answer.questionId);
       if (!question) return;
 
-      const selectedOption = question.options.find(opt => opt.id === selectedOptionId);
+      const selectedOption = question.options.find(option => option.id === answer.selectedOptionId);
       if (!selectedOption) return;
 
-      // Add alignment scores for each candidate
       Object.entries(selectedOption.alignment).forEach(([candidateId, score]) => {
         candidateScores[candidateId] = (candidateScores[candidateId] || 0) + score;
+        totalPossibleScore[candidateId] = (totalPossibleScore[candidateId] || 0) + 100;
       });
     });
 
-    // Convert to alignment results sorted by score (highest first)
-    const results: AlignmentResult[] = candidates.map(candidate => ({
-      candidateId: candidate.id,
-      candidateName: candidate.name,
-      candidateParty: candidate.party,
-      candidateImage: candidate.image,
-      alignmentScore: Math.round((candidateScores[candidate.id] / totalPossiblePoints) * 100)
-    }));
+    // Convert to percentage and sort
+    return Object.entries(candidateScores)
+      .map(([candidateId, score]) => ({
+        candidateId,
+        alignmentScore: Math.round((score / totalPossibleScore[candidateId]) * 100)
+      }))
+      .sort((a, b) => b.alignmentScore - a.alignmentScore);
+  };
 
-    return results.sort((a, b) => b.alignmentScore - a.alignmentScore);
+  const getProgress = (): number => {
+    if (questions.length === 0) return 0;
+    return Math.round((answers.length / questions.length) * 100);
   };
 
   return (
     <QuizContext.Provider
       value={{
         questions,
-        candidates,
-        isLoading,
-        error,
-        currentQuestionIndex,
         answers,
+        currentQuestionIndex,
         isCompleted,
-        startQuiz,
         answerQuestion,
-        nextQuestion,
-        previousQuestion,
-        completeQuiz,
+        goToNextQuestion,
+        goToPreviousQuestion,
+        goToQuestion,
         resetQuiz,
         getResults,
+        getProgress,
       }}
     >
       {children}

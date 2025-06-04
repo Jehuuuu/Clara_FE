@@ -1,80 +1,57 @@
 "use client";
 
 import React from "react";
-import { useQuiz } from "@/context/QuizContext";
-import { Button } from "@/components/common/Button";
 import { Card } from "@/components/common/Card";
-import { QuizQuestion as QuizQuestionType } from "@/lib/dummy-data";
+import { Button } from "@/components/common/Button";
+import { Badge } from "@/components/common/Badge";
+
+interface QuizQuestion {
+  id: string;
+  question: string;
+  options: {
+    id: string;
+    text: string;
+    alignment: {
+      [candidateId: string]: number;
+    };
+  }[];
+}
 
 interface QuizQuestionProps {
-  question: QuizQuestionType;
-  selectedOptionId: string | undefined;
+  question: QuizQuestion;
+  selectedOption?: string;
   onSelectOption: (optionId: string) => void;
-  onNext: () => void;
-  onPrevious: () => void;
-  onComplete: () => void;
-  isLastQuestion: boolean;
-  isFirstQuestion: boolean;
+  questionNumber: number;
+  totalQuestions: number;
 }
 
 export function QuizQuestion({
   question,
-  selectedOptionId,
+  selectedOption,
   onSelectOption,
-  onNext,
-  onPrevious,
-  onComplete,
-  isLastQuestion,
-  isFirstQuestion,
+  questionNumber,
+  totalQuestions
 }: QuizQuestionProps) {
   return (
-    <Card className="max-w-2xl mx-auto p-6">
-      <div className="space-y-6">
+    <Card className="p-6">
+      <div className="mb-4">
+        <Badge variant="outline" className="mb-2">
+          Question {questionNumber} of {totalQuestions}
+        </Badge>
         <h2 className="text-xl font-semibold">{question.question}</h2>
-        
-        <div className="space-y-3">
-          {question.options.map((option) => (
-            <div
-              key={option.id}
-              className={`p-4 rounded-md border-2 cursor-pointer transition-colors ${
-                selectedOptionId === option.id
-                  ? "border-blue-500 bg-blue-50"
-                  : "border-gray-200 hover:border-gray-300"
-              }`}
-              onClick={() => onSelectOption(option.id)}
-            >
-              <p>{option.text}</p>
-            </div>
-          ))}
-        </div>
-        
-        <div className="flex justify-between mt-6">
+      </div>
+      
+      <div className="space-y-3">
+        {question.options.map((option) => (
           <Button
-            onClick={onPrevious}
-            disabled={isFirstQuestion}
-            variant="outline"
+            key={option.id}
+            variant={selectedOption === option.id ? "default" : "outline"}
+            className="w-full text-left justify-start p-4 h-auto"
+            onClick={() => onSelectOption(option.id)}
           >
-            Previous
+            {option.text}
           </Button>
-          
-          {isLastQuestion ? (
-            <Button
-              onClick={onComplete}
-              disabled={!selectedOptionId}
-              variant="default"
-            >
-              See Results
-            </Button>
-          ) : (
-            <Button
-              onClick={onNext}
-              disabled={!selectedOptionId}
-              variant="default"
-            >
-              Next Question
-            </Button>
-          )}
-        </div>
+        ))}
       </div>
     </Card>
   );

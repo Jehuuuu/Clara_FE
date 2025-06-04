@@ -5,20 +5,20 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Search, Info, CheckCircle, Users } from "lucide-react";
 import { Button } from "@/components/common/Button";
-import { CandidateCard } from "@/components/candidate/CandidateCard";
-import { useCandidates } from "@/context/CandidateContext";
+import { PoliticianCard } from "@/components/politician/PoliticianCard";
+import { usePoliticians } from "@/context/PoliticianContext";
 
 export default function Home() {
-  const { candidates, issues, isLoading, getFilteredCandidates } = useCandidates();
+  const { politicians, issues, isLoading, getFilteredPoliticians } = usePoliticians();
   const [searchTerm, setSearchTerm] = useState("");
   
-  // Get first 3 candidates for featuring
-  const featuredCandidates = candidates.slice(0, 3);
+  // Get first 3 politicians for featuring
+  const featuredPoliticians = politicians.slice(0, 3);
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you would redirect to the candidates page with the search query
-    window.location.href = `/candidates?search=${encodeURIComponent(searchTerm)}`;
+    // In a real app, you would redirect to the politicians page with the search query
+    window.location.href = `/politicians?search=${encodeURIComponent(searchTerm)}`;
   };
 
   return (
@@ -32,7 +32,7 @@ export default function Home() {
               Informed Voting Starts Here
             </h1>
             <p className="text-lg md:text-xl mb-8 text-white/90">
-              Compare candidates, understand policy positions, and make confident decisions at the ballot box.
+              Compare politicians, understand policy positions, and make confident decisions at the ballot box.
             </p>
             
             {/* Search Bar */}
@@ -41,7 +41,7 @@ export default function Home() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-white/70" />
                 <input
                   type="text"
-                  placeholder="Search candidates, parties, or issues..."
+                  placeholder="Search politicians, parties, or issues..."
                   className="w-full py-3 pl-10 pr-16 rounded-full bg-white/20 border border-white/30 text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-white/50"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -65,18 +65,18 @@ export default function Home() {
             {[
               {
                 icon: <Info className="h-8 w-8 text-violet-500" />,
-                title: "Candidate Profiles",
-                description: "Detailed information on each candidate's background, experience, and policy positions.",
+                title: "Politician Profiles",
+                description: "Detailed information on each politician's background, experience, and policy positions.",
               },
               {
                 icon: <CheckCircle className="h-8 w-8 text-green-500" />,
                 title: "Issue Comparisons",
-                description: "Compare where candidates stand on the issues that matter most to you.",
+                description: "Compare where politicians stand on the issues that matter most to you.",
               },
               {
                 icon: <Users className="h-8 w-8 text-blue-500" />,
                 title: "Voter Quiz",
-                description: "Find out which candidates align with your values through our interactive quiz.",
+                description: "Find out which politicians align with your values through our interactive quiz.",
               },
             ].map((feature, index) => (
               <div 
@@ -92,23 +92,23 @@ export default function Home() {
         </div>
       </section>
       
-      {/* Featured Candidates */}
+      {/* Featured Politicians */}
       <section className="py-16 bg-muted/30">
         <div className="container px-4 mx-auto">
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-bold">Featured Candidates</h2>
-            <Link href="/candidates" className="flex items-center text-primary">
+            <h2 className="text-3xl font-bold">Featured Politicians</h2>
+            <Link href="/politicians" className="flex items-center text-primary">
               <span>View all</span>
               <ArrowRight className="ml-1 h-4 w-4" />
             </Link>
           </div>
           
           {isLoading ? (
-            <div className="text-center py-12">Loading candidates...</div>
+            <div className="text-center py-12">Loading politicians...</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredCandidates.map(candidate => (
-                <CandidateCard key={candidate.id} candidate={candidate} />
+              {featuredPoliticians.map(politician => (
+                <PoliticianCard key={politician.id} politician={politician} />
               ))}
             </div>
           )}
@@ -121,7 +121,7 @@ export default function Home() {
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl font-bold mb-4">Ready to Find Your Match?</h2>
             <p className="text-lg mb-8 text-muted-foreground">
-              Take our interactive quiz to discover which candidates best align with your values and priorities.
+              Take our interactive quiz to discover which politicians best align with your values and priorities.
             </p>
             <Link href="/quiz">
               <Button size="lg" className="font-medium">
