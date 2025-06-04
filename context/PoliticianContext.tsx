@@ -21,6 +21,7 @@ interface Politician {
     politician_image: string | null;
     politician_party: string | null;
   } | null;
+  party: string | null;
 }
 
 interface Issue {
@@ -48,15 +49,18 @@ interface PoliticianContextType {
     searchTerm: string;
     issueFilter: string | null;
     partyFilter: string | null;
+    positionFilter: string | null;
   };
   setSearchTerm: (term: string) => void;
   setIssueFilter: (issueId: string | null) => void;
   setPartyFilter: (party: string | null) => void;
+  setPositionFilter: (position: string | null) => void;
   clearFilters: () => void;
   
   // Getters
   getFilteredPoliticians: () => Politician[];
   getUniqueParties: () => string[];
+  getUniquePositions: () => string[];
 }
 
 const PoliticianContext = createContext<PoliticianContextType | undefined>(undefined);
@@ -72,6 +76,7 @@ export function PoliticianProvider({ children }: { children: ReactNode }) {
     searchTerm: "",
     issueFilter: null as string | null,
     partyFilter: null as string | null,
+    positionFilter: null as string | null,
   });
 
   // Fetch politicians from API
@@ -147,11 +152,16 @@ export function PoliticianProvider({ children }: { children: ReactNode }) {
     setFilter(prev => ({ ...prev, partyFilter: party }));
   };
 
+  const setPositionFilter = (position: string | null) => {
+    setFilter(prev => ({ ...prev, positionFilter: position }));
+  };
+
   const clearFilters = () => {
     setFilter({
       searchTerm: "",
       issueFilter: null,
       partyFilter: null,
+      positionFilter: null,
     });
   };
 
@@ -162,13 +172,19 @@ export function PoliticianProvider({ children }: { children: ReactNode }) {
       if (
         filter.searchTerm &&
         !politician.name.toLowerCase().includes(filter.searchTerm.toLowerCase()) &&
-        !(politician.latest_research?.politician_party || "").toLowerCase().includes(filter.searchTerm.toLowerCase())
+        !(politician.party || "").toLowerCase().includes(filter.searchTerm.toLowerCase()) &&
+        !(politician.latest_research?.position || "").toLowerCase().includes(filter.searchTerm.toLowerCase())
       ) {
         return false;
       }
 
-      // Apply party filter
-      if (filter.partyFilter && politician.latest_research?.politician_party !== filter.partyFilter) {
+      // Apply party filter - use the correct party field from main politician object
+      if (filter.partyFilter && politician.party !== filter.partyFilter) {
+        return false;
+      }
+
+      // Apply position filter
+      if (filter.positionFilter && politician.latest_research?.position !== filter.positionFilter) {
         return false;
       }
 
@@ -176,12 +192,20 @@ export function PoliticianProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  // Get unique parties
+  // Get unique parties - use the correct party field from main politician object
   const getUniqueParties = () => {
     const parties = politicians
-      .map(politician => politician.latest_research?.politician_party)
+      .map(politician => politician.party)
       .filter(party => party && party.trim() !== "");
     return Array.from(new Set(parties)) as string[];
+  };
+
+  // Get unique positions
+  const getUniquePositions = () => {
+    const positions = politicians
+      .map(politician => politician.latest_research?.position)
+      .filter(position => position && position.trim() !== "");
+    return Array.from(new Set(positions)) as string[];
   };
 
   return (
@@ -200,9 +224,11 @@ export function PoliticianProvider({ children }: { children: ReactNode }) {
         setSearchTerm,
         setIssueFilter,
         setPartyFilter,
+        setPositionFilter,
         clearFilters,
         getFilteredPoliticians,
         getUniqueParties,
+        getUniquePositions,
       }}
     >
       {children}

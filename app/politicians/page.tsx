@@ -10,7 +10,6 @@ import { useDebounce } from "@/hooks/useDebounce";
 import Link from "next/link";
 import Image from "next/image";
 import { Card } from "@/components/common/Card";
-import { Politician } from "@/lib/types";
 
 // Define the categories to display based on political positions
 const POSITION_CATEGORIES = [
@@ -27,56 +26,86 @@ const POSITION_CATEGORIES = [
   "Other"
 ];
 
+// Define the Politician interface based on the API response
+interface Politician {
+  id: number;
+  name: string;
+  image_url: string | null;
+  created_at: string;
+  party: string | null;
+  latest_research: {
+    id: number;
+    position: string;
+    background: string;
+    accomplishments: string;
+    criticisms: string;
+    summary: string;
+    sources: any;
+    created_at: string;
+    updated_at: string;
+    politician_image: string | null;
+    politician_party: string | null;
+  } | null;
+}
+
 // Compact Politician Card component for the grouped layout - matching My Picks exactly
-const CompactPoliticianCard = ({ 
-  politician, 
-  isSelected, 
-  onSelect 
-}: { 
-  politician: Politician; 
-  isSelected: boolean; 
+interface CompactPoliticianCardProps {
+  politician: Politician;
+  isSelected: boolean;
   onSelect: () => void;
-}) => {
+}
+
+function CompactPoliticianCard({ politician, isSelected, onSelect }: CompactPoliticianCardProps) {
   return (
-    <Link href={`/politician/${politician.id}`}>
-      <Card className={`rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden transition-all hover:shadow-md ${isSelected ? 'ring-2 ring-primary' : ''} w-full aspect-[2/3] relative flex flex-col`}>
-        <div 
-          className="absolute top-1 right-1 z-10"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onSelect();
-          }}
-        >
-          <Star 
-            className={`h-3 w-3 cursor-pointer ${isSelected ? 'fill-primary text-primary' : 'text-black'}`}
-          />
-        </div>
-        
-        <div className="relative w-full h-16 overflow-hidden">
-          <Image
-            src={politician.image || politician.image_url || "/placeholder-politician.jpg"}
-            alt={politician.name}
-            fill
-            className="object-cover"
-          />
-        </div>
-        
-        <div className="p-1 flex-grow flex flex-col text-[10px]">
-          <h3 className="font-medium truncate">{politician.name}</h3>
-          <p className="text-muted-foreground truncate">{politician.party || 'No party'}</p>
+    <div
+      className={`relative group cursor-pointer transition-all duration-200 ${
+        isSelected 
+          ? 'ring-2 ring-primary ring-offset-2' 
+          : 'hover:scale-105'
+      }`}
+      onClick={onSelect}
+    >
+      <Card className="p-2 h-full">
+        <div className="flex flex-col items-center text-center space-y-2">
+          <div className="relative w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+            {politician.image_url ? (
+              <Image
+                src={politician.image_url}
+                alt={politician.name}
+                fill
+                className="object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                <span className="text-gray-600 text-xs font-medium">
+                  {politician.name.charAt(0)}
+                </span>
+              </div>
+            )}
+          </div>
           
-          {/* Show position if available */}
-          {politician.position && (
-            <p className="mt-auto line-clamp-1 text-muted-foreground italic">
-              {politician.position}
-            </p>
+          <div className="space-y-1 min-h-0 flex-1">
+            <h3 className="font-medium text-xs leading-tight line-clamp-2">
+              {politician.name}
+            </h3>
+            
+            {politician.latest_research?.position && (
+              <p className="text-xs text-muted-foreground leading-tight">
+                {politician.latest_research.position}
+              </p>
+            )}
+          </div>
+          
+          {isSelected && (
+            <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+              <Star className="h-3 w-3 text-primary-foreground fill-current" />
+            </div>
           )}
         </div>
       </Card>
-    </Link>
+    </div>
   );
-};
+}
 
 export default function PoliticiansPage() {
   const searchParams = useSearchParams();
@@ -91,15 +120,18 @@ export default function PoliticiansPage() {
     setSearchTerm, 
     setIssueFilter,
     setPartyFilter,
+    setPositionFilter,
     clearFilters,
     getFilteredPoliticians,
     getUniqueParties,
+    getUniquePositions,
   } = usePoliticians();
   
   // Local search state to debounce
   const [localSearchTerm, setLocalSearchTerm] = useState(searchParams.get("search") || "");
   const debouncedSearchTerm = useDebounce(localSearchTerm, 300);
   const uniqueParties = getUniqueParties();
+  const uniquePositions = getUniquePositions();
   
   // Apply debounced search term to filter
   useEffect(() => {
@@ -134,8 +166,8 @@ export default function PoliticiansPage() {
     // Group politicians
     filteredPoliticians.forEach((politician: Politician) => {
       // Map position to an existing category, or use "Other"
-      const position = politician.position && POSITION_CATEGORIES.includes(politician.position) 
-        ? politician.position
+      const position = politician.latest_research?.position && POSITION_CATEGORIES.includes(politician.latest_research.position) 
+        ? politician.latest_research.position
         : "Other";
         
       groupedPoliticians[position].push(politician);
@@ -153,7 +185,7 @@ export default function PoliticiansPage() {
   const positionGroups = getPoliticiansByPosition();
 
   // Handle politician selection
-  const handlePoliticianSelect = (id: string) => {
+  const handlePoliticianSelect = (id: number) => {
     if (selectedPoliticians.includes(id)) {
       unselectPolitician(id);
     } else {
@@ -173,9 +205,9 @@ export default function PoliticiansPage() {
           >
             <Filter className="mr-2 h-4 w-4" />
             Filters
-            {filter.partyFilter && (
+            {(filter.partyFilter || filter.positionFilter) && (
               <Badge className="ml-2 h-5 w-5 p-0 flex items-center justify-center">
-                1
+                {(filter.partyFilter ? 1 : 0) + (filter.positionFilter ? 1 : 0)}
               </Badge>
             )}
           </Button>
@@ -191,7 +223,7 @@ export default function PoliticiansPage() {
           <div className="p-4 border rounded-lg sticky top-20">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Filters</h2>
-              {filter.partyFilter && (
+              {(filter.partyFilter || filter.positionFilter) && (
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -204,10 +236,10 @@ export default function PoliticiansPage() {
             </div>
             
             {/* Party Filter */}
-            <div>
+            <div className="mb-6">
               <h3 className="text-sm font-medium mb-2">Parties</h3>
               <div className="space-y-2">
-                {uniqueParties.map((party: string) => (
+                {uniqueParties.map(party => (
                   <div 
                     key={party} 
                     className="flex items-center"
@@ -227,6 +259,36 @@ export default function PoliticiansPage() {
                       className="text-sm cursor-pointer"
                     >
                       {party}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Position Filter */}
+            <div>
+              <h3 className="text-sm font-medium mb-2">Positions</h3>
+              <div className="space-y-2">
+                {uniquePositions.map(position => (
+                  <div 
+                    key={position} 
+                    className="flex items-center"
+                  >
+                    <input
+                      type="radio"
+                      id={`position-${position}`}
+                      name="position"
+                      checked={filter.positionFilter === position}
+                      onChange={() => setPositionFilter(
+                        filter.positionFilter === position ? null : position
+                      )}
+                      className="mr-2"
+                    />
+                    <label 
+                      htmlFor={`position-${position}`}
+                      className="text-sm cursor-pointer"
+                    >
+                      {position}
                     </label>
                   </div>
                 ))}
@@ -273,19 +335,35 @@ export default function PoliticiansPage() {
             </div>
             
             {/* Active Filters */}
-            {filter.partyFilter && (
+            {(filter.partyFilter || filter.positionFilter) && (
               <div className="flex flex-wrap gap-2 mb-4">
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  Party: {filter.partyFilter}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-4 w-4 ml-1"
-                    onClick={() => setPartyFilter(null)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </Badge>
+                {filter.partyFilter && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    Party: {filter.partyFilter}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-4 w-4 ml-1"
+                      onClick={() => setPartyFilter(null)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                )}
+                
+                {filter.positionFilter && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    Position: {filter.positionFilter}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-4 w-4 ml-1"
+                      onClick={() => setPositionFilter(null)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                )}
                 
                 <Button
                   variant="ghost"
@@ -356,8 +434,8 @@ export default function PoliticiansPage() {
                         <CompactPoliticianCard
                           key={politician.id}
                           politician={politician}
-                          isSelected={selectedPoliticians.includes(politician.id.toString())}
-                          onSelect={() => handlePoliticianSelect(politician.id.toString())}
+                          isSelected={selectedPoliticians.includes(politician.id)}
+                          onSelect={() => handlePoliticianSelect(politician.id)}
                         />
                       ))}
                     </div>
