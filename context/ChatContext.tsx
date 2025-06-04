@@ -233,7 +233,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       // Instead of always fetching new research data, fetch the existing report
       if (chat.research_report) {
         // Add a new function to fetch research by ID
-        const researchData = await fetchResearchById(chat.research_report, token);
+        const researchData = await fetchResearchById(chat.research_report, false);
         setResearchData(researchData);
         setCurrentPoliticianName(chat.politician);
         // Get position from research data if available
@@ -260,6 +260,25 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Create a temporary question object with a temporary ID
+    const tempId = `temp-${Date.now()}`;
+    const tempQuestion = {
+      id: tempId,
+      chat: currentChat.id,
+      question: question,
+      answer: "", // Empty answer initially
+      created_at: new Date().toISOString()
+    };
+
+    // Immediately update UI with the pending question
+    setCurrentChatState(prevChat => {
+      if (!prevChat) return null;
+      return {
+        ...prevChat,
+        qanda_set: [...prevChat.qanda_set, tempQuestion]
+      };
+    });
+
     try {
       const payload: AddQuestionRequest = {
         chat_id: currentChat.id,
@@ -268,23 +287,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
       const response = await addQuestion(payload, token);
 
+      // Replace the temporary question with the real response
       setCurrentChatState(prevChat => {
-        if (!prevChat) return null; // Safety check
-        // Update the current chat with the new Q&A entry
-        return {  
+        if (!prevChat) return null;
+        return {
           ...prevChat,
-          qanda_set: [...prevChat.qanda_set, response] // Append new Q&A
+          qanda_set: prevChat.qanda_set.map(qa => 
+            qa.id === tempId ? response : qa
+          )
         };
-      }
-      );
-
-      // currentChat.qanda_set.push({
-      //   id: response.id,
-      //   chat: currentChat.id,
-      //   question: question,
-      //   answer: response.answer,
-      //   created_at: new Date().toISOString()
-      // });
+      });
       
       console.log("Message added to current chat:", response);
     } catch (error) {
