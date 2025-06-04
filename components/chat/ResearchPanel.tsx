@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import ReactMarkdown from 'react-markdown';
 import { ChevronRight, ChevronLeft, ChevronDown, User, Trophy, AlertTriangle, FileText, Calendar, RefreshCw, Search, Building2, MapPin, PanelLeftOpen, PanelLeftClose, Shield, Clock, Database, ExternalLink } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/common/Avatar";
@@ -272,14 +273,10 @@ export function ResearchPanel({
                     {expandedSections.has(section.id) && (
                       <div className="research-section-content">
                         <div className={`mx-6 mb-6 ${section.bgColor} border-l-4 ${section.borderColor} rounded-r-lg overflow-hidden`}>
-                          <div className="p-6">
-                            <div className="prose prose-sm max-w-none text-gray-800 leading-relaxed">
-                              {section.content.split('\n\n').map((paragraph, index) => (
-                                <p key={index} className="mb-4 last:mb-0 text-justify">
-                                  {paragraph}
-                                </p>
-                              ))}
-                            </div>
+                          <div className="p-6 prose prose-sm max-w-none text-gray-800 leading-relaxed">
+                            <ReactMarkdown>
+                              {section.content}
+                            </ReactMarkdown>
                           </div>
                         </div>
                       </div>
@@ -334,4 +331,4 @@ export function ResearchPanel({
       )}
     </div>
   );
-} 
+}

@@ -2,6 +2,49 @@
 @tailwind components;
 @tailwind utilities;
 
+.markdown > * {
+  all: revert;
+}
+
+/* Add to your globals.css */
+ul {
+  list-style: disc !important;
+  padding-left: 2rem !important;
+}
+
+ol {
+  list-style: decimal !important;
+  padding-left: 2rem !important;
+}
+
+/* For nested lists */
+ul ul {
+  list-style: circle !important;
+}
+
+ul ul ul {
+  list-style: square !important;
+}
+
+/* Add these rules for better spacing in Markdown content */
+.prose p {
+  @apply text-gray-800 leading-relaxed mb-6; /* Increased bottom margin from default */
+}
+
+/* Add more spacing between other elements */
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+  @apply mt-8 mb-4;
+}
+
+.prose ul, .prose ol {
+  @apply my-3;
+}
+
+/* Add space between list items */
+.prose li {
+  @apply mb-1;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -270,6 +313,13 @@
   @apply font-medium;
 }
 
+/* Override Tailwind typography's first paragraph styling */
+.prose p:first-of-type {
+  font-weight: normal !important;
+  font-size: inherit !important;
+  margin-top: 0 !important;
+}
+
 /* Enhanced status badges */
 .status-badge-live {
   @apply relative overflow-hidden;
@@ -477,4 +527,4 @@
 .split-pane-resizer.dragging,
 .split-pane-resizer.dragging * {
   @apply select-none;
-} 
+}
