@@ -6,7 +6,7 @@ import axios from "axios";
 import { getAllChats, addChat, getChatQandA, deleteChat as apiDeleteChat } from "../lib/api/chat"; // Adjust the import path as needed
 import { AddQuestionRequest } from "../lib/api/question"; // Adjust the import path as needed
 import { addQuestion } from "../lib/api/question"; // Adjust the import path as needed
-import { fetchResearchByPoliticianAndPosition, ResearchResponse, fetchResearchById } from "../lib/api/research"; // Import research API
+import { fetchResearchByPoliticianAndPosition, ResearchResponse, fetchResearchById, fetchPoliticianDetails } from "../lib/api/research"; // Import research API
 import { set } from "date-fns";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
@@ -258,6 +258,44 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       if (chat.research_report) {
         // Fetch research by ID
         const researchData = await fetchResearchById(chat.research_report, false);
+        
+        // print the research data to console
+        console.log("Fetched research data:", researchData);
+
+        // Try to get the politician image from various sources
+        if (!researchData.politician_image) {
+          // If chat already has image, use it
+          if (chat.politician_image) {
+            researchData.politician_image = chat.politician_image;
+          } 
+          // Otherwise try to fetch it from the politicians API
+          else {
+            try {
+              const politicianId = researchData.politician_id || null;
+              if (politicianId) {
+                const politicianData = await fetchPoliticianDetails(politicianId);
+                console.log("Fetched politician details:", politicianData);
+                
+                // Handle the image_url
+                if (politicianData && politicianData.data && politicianData.data.image_url) {
+                  researchData.politician_image = politicianData.data.image_url;
+                  chat.politician_image = politicianData.data.image_url;
+                  console.log("Fetched politician image:", politicianData.data.image_url);
+                }
+                
+                // Handle the party information
+                if (politicianData && politicianData.data && politicianData.data.party) {
+                  researchData.politician_party = politicianData.data.party;
+                  chat.politician_party = politicianData.data.party;
+                  console.log("Fetched politician party:", politicianData.data.party);
+                }
+              }
+            } catch (error) {
+              console.error("Failed to fetch politician details:", error);
+            }
+          }
+        }
+        
         setResearchData(researchData);
         setCurrentPoliticianName(chat.politician);
         // Get position from research data if available

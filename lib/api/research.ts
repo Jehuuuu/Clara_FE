@@ -9,6 +9,7 @@ export interface ResearchResponse {
   created_at: string;
   updated_at: string;
   politician_image?: string;
+  politician_id?: number;
   politician_party?: string;
   metadata: {
     is_fresh: boolean;
@@ -58,6 +59,27 @@ export async function fetchResearchById(
   }
 
   const data: ResearchResponse = await response.json();
+  return data;
+}
+
+// Function to fetch politician details including image
+export async function fetchPoliticianDetails(
+  politicianId: number
+): Promise<any> {
+  const url = `http://127.0.0.1:8000/api/politicians/${politicianId}/`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch politician: ${response.status} ${response.statusText}`);
+  }
+
+  const data = await response.json();
   return data;
 }
 
