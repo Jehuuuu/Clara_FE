@@ -218,7 +218,6 @@ export function ResearchPanel({
                         <h2 className="text-2xl font-bold text-white">{politicianName}</h2>
                         {researchData.position && (
                           <div className="flex items-center mt-1 text-slate-300">
-                            <Building2 className="h-4 w-4 mr-2" />
                             <span className="font-medium text-sm">{researchData.position}</span>
                           </div>
                         )}
