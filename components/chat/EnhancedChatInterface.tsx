@@ -682,4 +682,4 @@ export function EnhancedChatInterface() {
         )}
       </div>
   );
-} 
+}
