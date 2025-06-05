@@ -37,6 +37,11 @@ interface PoliticianContextType {
   isLoading: boolean;
   error: string | null;
   
+  // Selection mode
+  selectionMode: 'compare' | 'add-to-picks' | 'normal';
+  setSelectionMode: (mode: 'compare' | 'add-to-picks' | 'normal') => void;
+  setSelectionModeWithClear: (mode: 'compare' | 'add-to-picks' | 'normal') => void;
+  
   // Selected politicians (for comparison)
   selectedPoliticians: number[];
   selectPolitician: (id: number) => void;
@@ -72,6 +77,7 @@ export function PoliticianProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPoliticians, setSelectedPoliticians] = useState<number[]>([]);
+  const [selectionMode, setSelectionMode] = useState<'compare' | 'add-to-picks' | 'normal'>('normal');
   const [filter, setFilter] = useState({
     searchTerm: "",
     issueFilter: null as string | null,
@@ -115,11 +121,20 @@ export function PoliticianProvider({ children }: { children: ReactNode }) {
   const selectPolitician = (id: number) => {
     if (selectedPoliticians.includes(id)) return;
     
-    // Limit to max 2 politicians for comparison
-    if (selectedPoliticians.length >= 2) {
-      setSelectedPoliticians([selectedPoliticians[1], id]);
-    } else {
+    // Apply selection limits based on mode
+    if (selectionMode === 'compare') {
+      // Limit to max 2 politicians for comparison
+      if (selectedPoliticians.length >= 2) {
+        setSelectedPoliticians([selectedPoliticians[1], id]);
+      } else {
+        setSelectedPoliticians([...selectedPoliticians, id]);
+      }
+    } else if (selectionMode === 'add-to-picks') {
+      // No limit for add-to-picks mode
       setSelectedPoliticians([...selectedPoliticians, id]);
+    } else {
+      // Normal mode - shouldn't be selecting politicians
+      setSelectedPoliticians([id]);
     }
   };
 
@@ -208,6 +223,12 @@ export function PoliticianProvider({ children }: { children: ReactNode }) {
     return Array.from(new Set(positions)) as string[];
   };
 
+  // Clear selections and set mode atomically to avoid timing issues
+  const setSelectionModeWithClear = (mode: 'compare' | 'add-to-picks' | 'normal') => {
+    setSelectedPoliticians([]);
+    setSelectionMode(mode);
+  };
+
   return (
     <PoliticianContext.Provider
       value={{
@@ -215,6 +236,9 @@ export function PoliticianProvider({ children }: { children: ReactNode }) {
         issues,
         isLoading,
         error,
+        selectionMode,
+        setSelectionMode,
+        setSelectionModeWithClear,
         selectedPoliticians,
         selectPolitician,
         unselectPolitician,
