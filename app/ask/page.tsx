@@ -56,8 +56,8 @@ function AskPageContent() {
           <div className="flex-1">
             <div className="chat-container">
               <EnhancedChatInterface />
-            </div>
           </div>
+        </div>
         )}
       </div>
     </div>
