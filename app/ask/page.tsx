@@ -5,9 +5,34 @@ import { ClientSidebar } from "@/components/chat/ClientSidebar";
 import { ResearchPanelWrapper } from "@/components/chat/ResearchPanelWrapper";
 import { ResizableSplitPane } from "@/components/common/ResizableSplitPane";
 import { useChat } from "@/context/ChatContext";
+import { useState, useEffect } from "react";
+
+// Import the loading component for reuse
+import AskPageLoadingSkeleton from "./loading";
 
 function AskPageContent() {
-  const { researchData, isResearchLoading, currentChat, currentPoliticianName, isResearchPanelCollapsed } = useChat();
+  const { researchData, isResearchLoading, currentChat, currentPoliticianName, isResearchPanelCollapsed, isLoadingChats } = useChat();
+  
+  // Client-side loading state for page refresh/initial load
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  
+  // Handle initial loading state - wait for chat context to determine current state
+  useEffect(() => {
+    // Wait for chats to finish loading, then determine if we should show loading
+    if (!isLoadingChats) {
+      // Give a small delay to ensure all context is properly initialized
+      const timer = setTimeout(() => {
+        setIsInitialLoading(false);
+      }, 300); // Short delay just for smooth transition
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isLoadingChats]);
+  
+  // Show loading skeleton during initial load OR while chats are loading
+  if (isInitialLoading || isLoadingChats) {
+    return <AskPageLoadingSkeleton />;
+  }
   
   // Check if research panel should be shown
   const shouldShowPanel = researchData || isResearchLoading || currentChat || currentPoliticianName;

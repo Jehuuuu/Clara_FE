@@ -5,10 +5,10 @@ import { Navbar } from "@/components/common/Navbar";
 import { Toasts } from "@/components/common/Toasts";
 import { Modal } from "@/components/common/Modal";
 import { UIProvider } from "@/context/UIContext";
-import { CandidateProvider } from "@/context/CandidateContext";
+import { PoliticianProvider } from "@/context/PoliticianContext";
 import { BookmarkProvider } from "@/context/BookmarkContext";
 import { AuthProvider } from "@/context/AuthContext";
-import { QuizProvider } from "@/context/QuizContext";
+// import { QuizProvider } from "@/context/QuizContext"; // Hidden per user request
 import { ChatProvider } from "@/context/ChatContext";
 import "@/styles/globals.css";
 
@@ -26,15 +26,15 @@ export default function RootLayout({
         <title>Clara | Election Awareness Portal</title>
         <meta
           name="description"
-          content="Empowering voters with information about candidates and issues"
+          content="Empowering voters with information about politicians and issues"
         />
       </head>
       <body>
         <AuthProvider>
           <UIProvider>
-            <CandidateProvider>
+            <PoliticianProvider>
               <BookmarkProvider>
-                <QuizProvider>
+                {/* <QuizProvider> - Hidden per user request */}
                   <ChatProvider>
                     <div className="h-screen flex flex-col overflow-hidden">
                       <Navbar />
@@ -43,9 +43,9 @@ export default function RootLayout({
                       <Modal />
                     </div>
                   </ChatProvider>
-                </QuizProvider>
+                {/* </QuizProvider> - Hidden per user request */}
               </BookmarkProvider>
-            </CandidateProvider>
+            </PoliticianProvider>
           </UIProvider>
         </AuthProvider>
       </body>

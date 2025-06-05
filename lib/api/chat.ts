@@ -73,12 +73,13 @@ export interface Chat {
  * @returns Promise resolving to an array of chats
  */
 export async function getAllChats(token: string | null): Promise<Chat[]> {
-  const url = 'http://localhost:8000/api/chat/chats/';
+  // Set a high limit to get all chats, since backend defaults to only 10
+  const url = 'http://localhost:8000/api/chat/chats/?limit=1000';
 
   if (!token) {
     throw new Error('Authentication token is required to fetch chats.');
   }
-  console.log("Fetching chats with token:", token);
+  
   const response = await fetch(url, {
     method: 'GET',
     headers: {

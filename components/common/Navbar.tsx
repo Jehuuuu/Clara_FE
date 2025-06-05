@@ -4,17 +4,18 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu, X, Sun, Moon, User, Info } from "lucide-react";
+import { Menu, X, User, Info } from "lucide-react";
+// import { Sun, Moon } from "lucide-react"; // Removed for hidden dark mode
 import { Button } from "@/components/common/Button";
 import { cn } from "@/lib/utils";
-import { useUI } from "@/context/UIContext";
+// import { useUI } from "@/context/UIContext"; // Removed for hidden dark mode
 import { useAuth } from "@/context/AuthContext";
 
 const navItems = [
   { label: "Ask", href: "/ask" },
-  { label: "Candidates", href: "/candidates" },
-  { label: "Issues", href: "/issues/economy" },
-  { label: "Pulse", href: "/quiz" }
+  { label: "Politicians", href: "/politicians" },
+  // { label: "Issues", href: "/issues/economy" },  // Hidden per user request
+  // { label: "Pulse", href: "/quiz" }              // Hidden per user request
 ];
 
 export function Navbar() {
@@ -22,7 +23,7 @@ export function Navbar() {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [showMyPicksTooltip, setShowMyPicksTooltip] = useState(false);
   const pathname = usePathname();
-  const { isDarkMode, toggleDarkMode } = useUI();
+  // const { isDarkMode, toggleDarkMode } = useUI(); // Removed for hidden dark mode
   const { user, logout } = useAuth();
 
   return (
@@ -93,8 +94,8 @@ export function Navbar() {
         
         {/* Right side items */}
         <div className="flex items-center space-x-2">
-          {/* Theme toggle */}
-          <Button
+          {/* Theme toggle - Hidden per user request */}
+          {/* <Button
             variant="ghost"
             size="icon"
             onClick={toggleDarkMode}
@@ -102,7 +103,7 @@ export function Navbar() {
             className="hidden md:flex"
           >
             {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-          </Button>
+          </Button> */}
           
           {/* Authentication */}
           {user ? (
@@ -268,7 +269,8 @@ export function Navbar() {
               </div>
             )}
             
-            <div className="flex items-center justify-between pt-4 border-t mt-4">
+            {/* Dark mode toggle hidden per user request */}
+            {/* <div className="flex items-center justify-between pt-4 border-t mt-4">
               <Button
                 variant="ghost"
                 size="sm"
@@ -287,7 +289,7 @@ export function Navbar() {
                   </>
                 )}
               </Button>
-            </div>
+            </div> */}
           </div>
         </div>
       )}

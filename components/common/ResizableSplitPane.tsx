@@ -56,6 +56,11 @@ export function ResizableSplitPane({
       const constrainedPercentage = Math.max(minPercentage, Math.min(maxPercentage, newPercentage));
       
       setSplitPercentage(constrainedPercentage);
+      
+      // Emit custom event to notify components of layout change
+      window.dispatchEvent(new CustomEvent('splitpane-resize', { 
+        detail: { percentage: constrainedPercentage } 
+      }));
     };
 
     const handleMouseUp = () => {

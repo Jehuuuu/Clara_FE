@@ -1,168 +1,131 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { SendIcon } from "lucide-react";
-import { ChatMessage, MessageRole } from "@/components/chat/ChatMessage";
-import { SuggestionList } from "@/components/chat/SuggestionList";
 import { Button } from "@/components/common/Button";
-import { Card } from "@/components/common/Card";
-import { candidates } from "@/lib/dummy-data";
+import { Input } from "@/components/common/Input";
+import { Send, Mic, MicOff } from "lucide-react";
 
 interface Message {
   id: string;
   content: string;
-  role: MessageRole;
+  isUser: boolean;
   timestamp: Date;
 }
 
-// Keywords that trigger candidate suggestions based on issues
-const ISSUE_KEYWORDS: Record<string, string[]> = {
-  economy: ["economy", "jobs", "taxes", "wages", "business", "economic", "unemployment", "inflation"],
-  healthcare: ["healthcare", "health", "medical", "insurance", "hospital", "doctors", "medicine", "prescription"],
-  environment: ["environment", "climate", "pollution", "energy", "green", "renewable", "sustainability", "carbon"],
-  education: ["education", "school", "college", "student", "university", "teacher", "tuition", "learning"],
-  immigration: ["immigration", "border", "immigrant", "migration", "citizenship", "visa", "asylum", "refugee"]
-};
+interface ChatInterfaceProps {
+  onSendMessage: (message: string) => void;
+  messages: Message[];
+  isLoading?: boolean;
+  placeholder?: string;
+}
 
-export function ChatInterface() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      content: "Hello! I'm Clara, your election assistant. Ask me about candidates, issues, or policies, and I'll help you find information.",
-      role: "assistant",
-      timestamp: new Date()
-    }
-  ]);
-  const [input, setInput] = useState("");
-  const [suggestions, setSuggestions] = useState<{
-    candidates: typeof candidates;
-    matchedIssue?: string;
-  } | null>(null);
-  
+export function ChatInterface({ 
+  onSendMessage, 
+  messages, 
+  isLoading = false,
+  placeholder = "Ask me anything about politicians..."
+}: ChatInterfaceProps) {
+  const [message, setMessage] = useState("");
+  const [isListening, setIsListening] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  
-  // Auto-scroll to bottom of messages
-  useEffect(() => {
+
+  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
   }, [messages]);
 
-  // Focus input on load
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
-    
-    // Add user message
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: input,
-      role: "user",
-      timestamp: new Date()
-    };
-    
-    setMessages(prev => [...prev, userMessage]);
-    setInput("");
-    
-    // Process the message to generate suggestions
-    setTimeout(() => generateResponse(input), 500);
-  };
-  
-  const generateResponse = (question: string) => {
-    // Identify relevant issues from keywords
-    const matchedIssues = findMatchedIssues(question.toLowerCase());
-    const primaryIssue = matchedIssues.length > 0 ? matchedIssues[0] : undefined;
-    
-    // Generate AI response
-    let responseContent = "";
-    if (matchedIssues.length > 0) {
-      responseContent = `I found some candidates with positions on ${matchedIssues.join(", ")}. You might want to check their profiles for more details.`;
-      
-      // Filter candidates based on matched issues
-      const relevantCandidates = candidates.filter(candidate => 
-        matchedIssues.some(issue => issue in candidate.issues)
-      ).slice(0, 3); // Limit to 3 suggestions
-      
-      setSuggestions({
-        candidates: relevantCandidates,
-        matchedIssue: primaryIssue
-      });
-    } else {
-      responseContent = "I'm not sure I understand which political issues you're interested in. Try asking about specific topics like economy, healthcare, education, etc.";
-      setSuggestions(null);
+    if (message.trim() && !isLoading) {
+      onSendMessage(message.trim());
+      setMessage("");
     }
-    
-    // Add assistant response
-    const assistantMessage: Message = {
-      id: Date.now().toString(),
-      content: responseContent,
-      role: "assistant",
-      timestamp: new Date()
-    };
-    
-    setMessages(prev => [...prev, assistantMessage]);
   };
-  
-  const findMatchedIssues = (text: string): string[] => {
-    const matches: string[] = [];
-    
-    // Check each issue's keywords against the text
-    Object.entries(ISSUE_KEYWORDS).forEach(([issue, keywords]) => {
-      if (keywords.some(keyword => text.includes(keyword))) {
-        matches.push(issue);
-      }
-    });
-    
-    return matches;
+
+  const handleVoiceInput = () => {
+    // Voice input functionality would be implemented here
+    setIsListening(!isListening);
   };
-  
+
   return (
-    <Card className="flex flex-col w-full h-[80vh] max-h-[700px] overflow-hidden">
-      <div className="p-4 border-b">
-        <h2 className="text-lg font-medium">Ask Clara</h2>
-        <p className="text-sm text-muted-foreground">Get information about candidates and issues</p>
-      </div>
-      
-      <div className="flex-1 p-4 overflow-y-auto">
-        {messages.map(message => (
-          <ChatMessage
-            key={message.id}
-            content={message.content}
-            role={message.role}
-            timestamp={message.timestamp}
-          />
-        ))}
+    <div className="flex flex-col h-full">
+      {/* Messages Container */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.length === 0 ? (
+          <div className="text-center text-gray-500 mt-8">
+            <p>Start a conversation to get political insights!</p>
+          </div>
+        ) : (
+          messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`flex ${msg.isUser ? "justify-end" : "justify-start"}`}
+            >
+              <div
+                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                  msg.isUser
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-200 text-gray-800"
+                }`}
+              >
+                <p className="text-sm">{msg.content}</p>
+                <p className="text-xs opacity-75 mt-1">
+                  {msg.timestamp.toLocaleTimeString()}
+                </p>
+              </div>
+            </div>
+          ))
+        )}
         
-        {suggestions && (
-          <SuggestionList
-            title="Suggested Candidates"
-            candidates={suggestions.candidates}
-            matchedIssue={suggestions.matchedIssue}
-          />
+        {isLoading && (
+          <div className="flex justify-start">
+            <div className="bg-gray-200 text-gray-800 max-w-xs lg:max-w-md px-4 py-2 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-gray-600 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-gray-600 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
+                  <div className="w-2 h-2 bg-gray-600 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
+                </div>
+                <span className="text-sm">Clara is thinking...</span>
+              </div>
+            </div>
+          </div>
         )}
         
         <div ref={messagesEndRef} />
       </div>
-      
-      <div className="p-4 border-t mt-auto">
-        <form onSubmit={handleSubmit} className="flex items-center gap-2">
-          <input
-            ref={inputRef}
-            type="text"
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            placeholder="Ask about candidates or issues..."
-            className="flex-1 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+
+      {/* Input Form */}
+      <div className="border-t p-4">
+        <form onSubmit={handleSubmit} className="flex space-x-2">
+          <Input
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder={placeholder}
+            disabled={isLoading}
+            className="flex-1"
           />
-          <Button type="submit" size="icon">
-            <SendIcon className="h-4 w-4" />
-            <span className="sr-only">Send</span>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={handleVoiceInput}
+            className={isListening ? "bg-red-100 border-red-300" : ""}
+          >
+            {isListening ? (
+              <MicOff className="h-4 w-4 text-red-600" />
+            ) : (
+              <Mic className="h-4 w-4" />
+            )}
+          </Button>
+          <Button type="submit" disabled={!message.trim() || isLoading}>
+            <Send className="h-4 w-4" />
           </Button>
         </form>
       </div>
-    </Card>
+    </div>
   );
 } 
