@@ -61,32 +61,34 @@ export async function getCandidate(id: string) {
   }
 }
 
-export async function getIssues() {
-  // This will be implemented when the backend has an issues endpoint
-  try {
-    return fetchFromAPI('/issues/');
-  } catch (error) {
-    console.error('Failed to fetch issues:', error);
-    return [];
-  }
-}
+// Issues functionality hidden per user request
+// export async function getIssues() {
+//   // This will be implemented when the backend has an issues endpoint
+//   try {
+//     return fetchFromAPI('/issues/');
+//   } catch (error) {
+//     console.error('Failed to fetch issues:', error);
+//     return [];
+//   }
+// }
 
-export async function getIssue(slug: string) {
-  // This will be implemented when the backend has an issue detail endpoint
-  try {
-    return fetchFromAPI(`/issues/${slug}/`);
-  } catch (error) {
-    console.error(`Failed to fetch issue with slug ${slug}:`, error);
-    return null;
-  }
-}
+// export async function getIssue(slug: string) {
+//   // This will be implemented when the backend has an issue detail endpoint
+//   try {
+//     return fetchFromAPI(`/issues/${slug}/`);
+//   } catch (error) {
+//     console.error(`Failed to fetch issue with slug ${slug}:`, error);
+//     return null;
+//   }
+// }
 
-export async function getQuizQuestions() {
-  // This will be implemented when the backend has a quiz questions endpoint
-  try {
-    return fetchFromAPI('/quiz/questions/');
-  } catch (error) {
-    console.error('Failed to fetch quiz questions:', error);
-    return [];
-  }
-} 
+// Quiz functionality hidden per user request
+// export async function getQuizQuestions() {
+//   // This will be implemented when the backend has a quiz questions endpoint
+//   try {
+//     return fetchFromAPI('/quiz/questions/');
+//   } catch (error) {
+//     console.error('Failed to fetch quiz questions:', error);
+//     return [];
+//   }
+// } 

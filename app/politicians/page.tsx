@@ -457,7 +457,7 @@ export default function PoliticiansPage() {
               
               {/* Actions dropdown for collapsed sidebar */}
               {showActionDropdown && (
-                <div className="absolute left-full top-0 ml-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg animate-in slide-right-fade-in duration-200 z-10">
+                <div className="absolute left-full top-0 ml-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg animate-in slide-right-fade-in duration-200 z-50">
                   {selectionMode === 'normal' ? (
                     <div className="p-2 space-y-1">
                       <button
@@ -603,7 +603,7 @@ export default function PoliticiansPage() {
                   </Button>
                   
                   {showActionDropdown && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg animate-in slide-down-fade-in duration-200 z-10">
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg animate-in slide-down-fade-in duration-200 z-50">
                       <div className="p-2 space-y-1">
                         <button
                           onClick={() => handleModeChange('add-to-picks')}

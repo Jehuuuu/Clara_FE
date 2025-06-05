@@ -58,8 +58,8 @@ export function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md p-6 mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md">
-      <h2 className="mb-6 text-2xl font-bold text-center text-gray-800 dark:text-white">
+    <div className="w-full max-w-md p-6 mx-auto bg-white">
+      <h2 className="mb-6 text-2xl font-bold text-center text-gray-800">
         Log In to Clara
       </h2>
       
@@ -67,7 +67,7 @@ export function LoginForm() {
         <div>
           <label
             htmlFor="username"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            className="block text-sm font-medium text-gray-700"
           >
             Username
           </label>
@@ -76,7 +76,7 @@ export function LoginForm() {
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+            className="mt-1 block w-full px-3 py-2 bg-white"
             placeholder="your username"
             required
           />
@@ -85,7 +85,7 @@ export function LoginForm() {
         <div>
           <label 
             htmlFor="password" 
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            className="block text-sm font-medium text-gray-700"
           >
             Password
           </label>
@@ -94,7 +94,7 @@ export function LoginForm() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+            className="mt-1 block w-full px-3 py-2 bg-white"
             placeholder="••••••••"
             required
           />
@@ -110,7 +110,7 @@ export function LoginForm() {
             />
             <label 
               htmlFor="remember-me" 
-              className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
+              className="ml-2 block text-sm text-gray-700"
             >
               Remember me
             </label>
@@ -138,7 +138,7 @@ export function LoginForm() {
       </form>
       
       <div className="mt-6 text-center">
-        <p className="text-sm text-gray-600 dark:text-gray-400">
+        <p className="text-sm text-gray-600">
           Don't have an account?{" "}
           <Link 
             href="/auth/register" 
@@ -150,7 +150,7 @@ export function LoginForm() {
       </div>
       
       {/* Demo credentials */}
-      <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-700 rounded text-xs text-center">
+      <div className="mt-4 p-3 bg-gray-100">
         <p className="font-bold mb-1">Demo Credentials</p>
         <p>Username: demouser</p>
         <p>Password: password</p>

@@ -17,10 +17,10 @@ export function Toasts() {
           key={toast.id}
           className={cn(
             "p-4 rounded-md shadow-lg pointer-events-auto flex items-center justify-between",
-            toast.type === "success" && "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100",
-            toast.type === "error" && "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100",
-            toast.type === "warning" && "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100",
-            toast.type === "info" && "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
+            toast.type === "success" && "bg-green-100 text-green-800",
+            toast.type === "error" && "bg-red-100 text-red-800",
+            toast.type === "warning" && "bg-yellow-100 text-yellow-800",
+            toast.type === "info" && "bg-blue-100 text-blue-800"
           )}
         >
           <div className="flex items-center space-x-3">
@@ -39,7 +39,7 @@ export function Toasts() {
           
           <button
             onClick={() => removeToast(toast.id)}
-            className="ml-4 flex-shrink-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="ml-4 flex-shrink-0 text-gray-500 hover:text-gray-700"
           >
             <X className="h-4 w-4" />
           </button>

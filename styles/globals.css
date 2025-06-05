@@ -150,6 +150,9 @@ ul ul ul {
 /* Chat Interface */
 .chat-interface {
   @apply flex flex-col w-full h-full bg-white;
+  /* Ensure it stays within bounds when research panel is expanded */
+  max-height: 100%;
+  overflow: hidden;
 }
 
 .chat-header {
@@ -161,15 +164,29 @@ ul ul ul {
 }
 
 .chat-messages-area {
-  @apply flex-1 overflow-y-auto bg-gray-50 min-h-0;
+  @apply flex-1 overflow-y-auto bg-gray-50;
+  /* Ensure proper scroll behavior in all layout scenarios */
+  position: relative;
+  scroll-behavior: smooth;
+  height: 0; /* Force proper flexbox height calculation */
+  max-height: 100%; /* Prevent overflow when research panel expands */
+  /* Force hardware acceleration for smooth scrolling */
+  transform: translateZ(0);
+  -webkit-overflow-scrolling: touch;
 }
 
 .chat-messages-container {
   @apply max-w-2xl mx-auto;
+  /* Ensure proper height for scrolling */
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: visible; /* Allow content to flow naturally */
 }
 
 .chat-input-area {
   @apply border-t border-gray-200 bg-white p-4 flex-shrink-0;
+  position: relative; /* Ensure it stays in the document flow */
 }
 
 .chat-input-container {
@@ -292,7 +309,7 @@ ul ul ul {
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -300,8 +317,73 @@ ul ul ul {
   }
 }
 
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translate3d(0,0,0);
+  }
+  40%, 43% {
+    transform: translate3d(0, -8px, 0);
+  }
+  70% {
+    transform: translate3d(0, -4px, 0);
+  }
+  90% {
+    transform: translate3d(0, -2px, 0);
+  }
+}
+
 .animation-fadeIn {
-  animation: fadeIn 0.3s ease-out;
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+/* Enhanced animations for ask page improvements */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out forwards;
+}
+
+.animate-bounce {
+  animation: bounce 2s infinite;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
 }
 
 /* Typography improvements for research content */
@@ -408,6 +490,32 @@ ul ul ul {
 
 .sidebar-content {
   @apply flex-1 overflow-hidden;
+  height: 0; /* Force proper height calculation */
+}
+
+/* Enhanced sidebar scrolling */
+.sidebar-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db #f9fafb;
+}
+
+.sidebar-scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-scroll-container::-webkit-scrollbar-track {
+  background: #f9fafb;
+  border-radius: 3px;
+}
+
+.sidebar-scroll-container::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+  border: 1px solid #f9fafb;
+}
+
+.sidebar-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }
 
 .sidebar-guest-content {
@@ -501,6 +609,9 @@ ul ul ul {
 /* Resizable Split Pane Styles */
 .resizable-split-pane {
   @apply relative;
+  /* Ensure proper height and overflow handling */
+  height: 100%;
+  overflow: hidden;
 }
 
 .split-pane-resizer {
@@ -527,4 +638,54 @@ ul ul ul {
 .split-pane-resizer.dragging,
 .split-pane-resizer.dragging * {
   @apply select-none;
+}
+
+/* Ask Page Layout - Proper height constraints */
+.app-container {
+  @apply h-full;
+}
+
+.main-layout {
+  @apply flex h-full;
+}
+
+.sidebar-container {
+  @apply flex-shrink-0;
+}
+
+.chat-container {
+  @apply h-full flex flex-col;
+}
+
+.research-panel-container {
+  @apply h-full flex flex-col;
+}
+
+.research-expanded {
+  @apply bg-white border-l border-gray-200;
+}
+
+/* Custom Scrollbar Styles for My Picks Page */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db #f3f4f6;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+  border: 1px solid #f3f4f6;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }

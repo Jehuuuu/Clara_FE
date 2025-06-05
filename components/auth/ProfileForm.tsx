@@ -68,8 +68,8 @@ export function ProfileForm() {
   };
   
   return (
-    <div className="w-full max-w-md p-6 mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md">
-      <h2 className="mb-6 text-2xl font-bold text-center text-gray-800 dark:text-white">
+    <div className="w-full max-w-md p-6 mx-auto bg-white">
+      <h2 className="mb-6 text-2xl font-bold text-center text-gray-800">
         Your Profile
       </h2>
       
@@ -78,7 +78,7 @@ export function ProfileForm() {
           <div>
             <label 
               htmlFor="firstName" 
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              className="block text-sm font-medium text-gray-700"
             >
               First Name
             </label>
@@ -87,7 +87,7 @@ export function ProfileForm() {
               type="text"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+              className="mt-1 block w-full px-3 py-2 bg-white"
               required
             />
           </div>
@@ -95,7 +95,7 @@ export function ProfileForm() {
           <div>
             <label 
               htmlFor="lastName" 
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              className="block text-sm font-medium text-gray-700"
             >
               Last Name
             </label>
@@ -104,7 +104,7 @@ export function ProfileForm() {
               type="text"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+              className="mt-1 block w-full px-3 py-2 bg-white"
             />
           </div>
           
@@ -131,20 +131,20 @@ export function ProfileForm() {
       ) : (
         <div className="space-y-4">
           <div>
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Name</h3>
-            <p className="mt-1 text-sm text-gray-900 dark:text-gray-200">
+            <h3 className="text-sm font-medium text-gray-500">Name</h3>
+            <p className="mt-1 text-sm text-gray-900">
               {user.first_name} {user.last_name}
             </p>
           </div>
           
           <div>
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Username</h3>
-            <p className="mt-1 text-sm text-gray-900 dark:text-gray-200">{user.username}</p>
+            <h3 className="text-sm font-medium text-gray-500">Username</h3>
+            <p className="mt-1 text-sm text-gray-900">{user.username}</p>
           </div>
           
           <div>
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Saved Picks</h3>
-            <p className="mt-1 text-sm text-gray-900 dark:text-gray-200">
+            <h3 className="text-sm font-medium text-gray-500">Saved Picks</h3>
+            <p className="mt-1 text-sm text-gray-900">
               {user.savedPicks.length} candidates
             </p>
           </div>

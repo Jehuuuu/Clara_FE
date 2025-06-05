@@ -273,7 +273,7 @@ export function ResearchPanel({
                     {expandedSections.has(section.id) && (
                       <div className="research-section-content">
                         <div className={`mx-6 mb-6 ${section.bgColor} border-l-4 ${section.borderColor} rounded-r-lg overflow-hidden`}>
-                          <div className="p-6 prose prose-sm max-w-none text-gray-800 leading-relaxed">
+                          <div className="p-6 prose prose-sm max-w-none text-gray-800 leading-relaxed text-justify">
                             <ReactMarkdown>
                               {section.content}
                             </ReactMarkdown>

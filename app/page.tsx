@@ -73,11 +73,11 @@ export default function Home() {
                 title: "Issue Comparisons",
                 description: "Compare where politicians stand on the issues that matter most to you.",
               },
-              {
-                icon: <Users className="h-8 w-8 text-blue-500" />,
-                title: "Voter Quiz",
-                description: "Find out which politicians align with your values through our interactive quiz.",
-              },
+              // {
+              //   icon: <Users className="h-8 w-8 text-blue-500" />,
+              //   title: "Voter Quiz",
+              //   description: "Find out which politicians align with your values through our interactive quiz.",
+              // },
             ].map((feature, index) => (
               <div 
                 key={index} 
@@ -115,8 +115,8 @@ export default function Home() {
         </div>
       </section>
       
-      {/* CTA Section */}
-      <section className="py-16 bg-accent">
+      {/* CTA Section - Hidden per user request */}
+      {/* <section className="py-16 bg-accent">
         <div className="container px-4 mx-auto">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl font-bold mb-4">Ready to Find Your Match?</h2>
@@ -130,7 +130,7 @@ export default function Home() {
             </Link>
           </div>
         </div>
-      </section>
+      </section> */}
     </div>
   );
 } 

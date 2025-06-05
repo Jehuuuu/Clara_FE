@@ -25,12 +25,12 @@ const LOADING_POSITION_GROUPS = generateLoadingPositions();
 function PoliticianCardSkeleton() {
   return (
     <div className="w-[104px] h-[105px] animate-pulse">
-      <div className="p-2 h-full w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
+      <div className="p-2 h-full w-full bg-white">
         <div className="flex flex-col items-center text-center space-y-1.5 h-full">
-          <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600"></div>
+          <div className="w-10 h-10 rounded-full bg-gray-200"></div>
           <div className="space-y-0.5 min-h-0 flex-1 flex flex-col justify-center w-full">
-            <div className="h-2 bg-gray-200 dark:bg-gray-600 rounded w-full"></div>
-            <div className="h-2 bg-gray-200 dark:bg-gray-600 rounded w-3/4 mx-auto"></div>
+            <div className="h-2 bg-gray-200"></div>
+            <div className="h-2 bg-gray-200"></div>
           </div>
         </div>
       </div>
@@ -45,16 +45,16 @@ function PositionGroupSkeleton({ position, count, groupIndex }: { position: stri
       <div className="mb-4">
         {/* Header skeleton that matches real position headers */}
         <h2 className="
-          text-lg font-semibold text-gray-900 dark:text-gray-100
-          border-b-2 border-gray-200 dark:border-gray-700 
+          text-lg font-semibold text-gray-900
+          border-b-2 border-gray-200
           pb-2 mb-4
           flex items-center justify-between
           transition-colors duration-200
         ">
-          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-24 animate-pulse"></div>
+          <div className="h-6 bg-gray-200"></div>
           <div className="
             h-6 w-8 
-            bg-gray-100 dark:bg-gray-800
+            bg-gray-100
             rounded-full
             animate-pulse
           "></div>
@@ -81,8 +81,8 @@ function PositionGroupSkeleton({ position, count, groupIndex }: { position: stri
 function SidebarSkeleton() {
   return (
     <div className="
-      w-[280px] bg-white dark:bg-gray-900 
-      border-r border-gray-200 dark:border-gray-700
+      w-[280px] bg-white
+      border-r border-gray-200
       sticky top-0 h-screen
       flex flex-col
       animate-in fade-in duration-200
@@ -90,18 +90,18 @@ function SidebarSkeleton() {
       {/* Header skeleton */}
       <div className="
         flex items-center justify-between 
-        p-4 border-b border-gray-200 dark:border-gray-700
+        p-4 border-b border-gray-200
       ">
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-gray-300" />
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12 animate-pulse"></div>
+          <div className="h-4 bg-gray-200"></div>
         </div>
-        <div className="h-6 w-12 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+        <div className="h-6 w-12 bg-gray-200"></div>
       </div>
       
       {/* Actions Section skeleton */}
-      <div className="border-b border-gray-200 dark:border-gray-700 p-4">
-        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-full animate-pulse"></div>
+      <div className="border-b border-gray-200">
+        <div className="h-8 bg-gray-200"></div>
       </div>
       
       <div className="flex-1 overflow-y-auto p-4 space-y-6">
@@ -109,23 +109,23 @@ function SidebarSkeleton() {
         <div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-300" />
-            <div className="w-full h-10 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg animate-pulse"></div>
+            <div className="w-full h-10 bg-gray-100"></div>
           </div>
         </div>
         
         {/* Parties skeleton (collapsible) */}
         <div>
           <div className="flex items-center justify-between p-2 rounded-md mb-2">
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12 animate-pulse"></div>
-            <div className="h-4 w-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+            <div className="h-4 bg-gray-200"></div>
+            <div className="h-4 w-4 bg-gray-200"></div>
           </div>
         </div>
         
         {/* Positions skeleton (collapsible) */}
         <div>
           <div className="flex items-center justify-between p-2 rounded-md mb-2">
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse"></div>
-            <div className="h-4 w-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+            <div className="h-4 bg-gray-200"></div>
+            <div className="h-4 w-4 bg-gray-200"></div>
           </div>
         </div>
       </div>
@@ -138,8 +138,8 @@ function HeaderSkeleton() {
   return (
     <div className="flex justify-between items-center mb-6 animate-in fade-in duration-200">
       <div className="animate-in fade-in duration-200 delay-100">
-        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-2 animate-pulse"></div>
-        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-48 animate-pulse"></div>
+        <div className="h-8 bg-gray-200"></div>
+        <div className="h-4 bg-gray-200"></div>
       </div>
     </div>
   );
@@ -147,7 +147,7 @@ function HeaderSkeleton() {
 
 export default function Loading() {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50">
       <div className="flex">
         {/* Sidebar Skeleton */}
         <SidebarSkeleton />

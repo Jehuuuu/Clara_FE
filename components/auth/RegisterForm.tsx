@@ -80,8 +80,8 @@ export function RegisterForm() {
   };
 
   return (
-    <div className="w-full max-w-md p-6 mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md">
-      <h2 className="mb-6 text-2xl font-bold text-center text-gray-800 dark:text-white">
+    <div className="w-full max-w-md p-6 mx-auto bg-white">
+      <h2 className="mb-6 text-2xl font-bold text-center text-gray-800">
         Create Your Clara Account
       </h2>
       
@@ -89,7 +89,7 @@ export function RegisterForm() {
         <div>
           <label 
             htmlFor="firstName" 
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            className="block text-sm font-medium text-gray-700"
           >
             First Name
           </label>
@@ -98,7 +98,7 @@ export function RegisterForm() {
             type="text"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+            className="mt-1 block w-full px-3 py-2 bg-white"
             placeholder="John"
             required
           />
@@ -107,7 +107,7 @@ export function RegisterForm() {
         <div>
           <label 
             htmlFor="lastName" 
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            className="block text-sm font-medium text-gray-700"
           >
             Last Name
           </label>
@@ -116,7 +116,7 @@ export function RegisterForm() {
             type="text"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+            className="mt-1 block w-full px-3 py-2 bg-white"
             placeholder="Doe"
             required
           />
@@ -125,7 +125,7 @@ export function RegisterForm() {
         <div>
           <label 
             htmlFor="username" 
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            className="block text-sm font-medium text-gray-700"
           >
             Username
           </label>
@@ -134,7 +134,7 @@ export function RegisterForm() {
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+            className="mt-1 block w-full px-3 py-2 bg-white"
             placeholder="your_username"
             required
           />
@@ -143,7 +143,7 @@ export function RegisterForm() {
         <div>
           <label 
             htmlFor="password" 
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            className="block text-sm font-medium text-gray-700"
           >
             Password
           </label>
@@ -152,11 +152,11 @@ export function RegisterForm() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+            className="mt-1 block w-full px-3 py-2 bg-white"
             placeholder="••••••••"
             required
           />
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-xs text-gray-500">
             Must be at least 6 characters
           </p>
         </div>
@@ -164,7 +164,7 @@ export function RegisterForm() {
         <div>
           <label 
             htmlFor="confirmPassword" 
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            className="block text-sm font-medium text-gray-700"
           >
             Confirm Password
           </label>
@@ -173,7 +173,7 @@ export function RegisterForm() {
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+            className="mt-1 block w-full px-3 py-2 bg-white"
             placeholder="••••••••"
             required
           />
@@ -189,7 +189,7 @@ export function RegisterForm() {
           />
           <label 
             htmlFor="terms" 
-            className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
+            className="ml-2 block text-sm text-gray-700"
           >
             I agree to the{" "}
             <a href="#" className="text-primary hover:text-primary/80">
@@ -214,7 +214,7 @@ export function RegisterForm() {
       </form>
       
       <div className="mt-6 text-center">
-        <p className="text-sm text-gray-600 dark:text-gray-400">
+        <p className="text-sm text-gray-600">
           Already have an account?{" "}
           <Link 
             href="/auth/login" 

@@ -233,42 +233,33 @@ function ChatBrowserModal({ onClose }: { onClose: () => void }) {
 
 export function ClientSidebar() {
   const { user } = useAuth();
-  const { chats, currentChat, setCurrentChat, createChat } = useChat();
+  const { createChat } = useChat();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [showResearchModal, setShowResearchModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [showChatBrowser, setShowChatBrowser] = useState(false);
-  
-  // Handle custom event for opening research modal from chat browser
+
+  // Listen for modal open events from chat browser
   useEffect(() => {
     const handleOpenResearchModal = () => {
-      setShowResearchModal(true);
+      setShowModal(true);
     };
-    
+
     document.addEventListener('openResearchModal', handleOpenResearchModal);
-    
     return () => {
       document.removeEventListener('openResearchModal', handleOpenResearchModal);
     };
   }, []);
-  
+
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
   };
 
-  const handleChatSelect = (chatId: number) => {
-    if (isCollapsed) {
-      setIsCollapsed(false); // Auto-expand when selecting a chat
-    }
-    setCurrentChat(chatId, user?.refreshToken || "");
-  };
-
   const handleNewResearch = () => {
-    setShowResearchModal(true);
+    setShowModal(true);
   };
 
   const handlePoliticianSelect = (data: CreateChatParams) => {
-    setShowResearchModal(false);
-    // Create the chat using the same function as the main interface
+    setShowModal(false);
     createChat(data, user?.refreshToken || null);
   };
 
@@ -276,165 +267,81 @@ export function ClientSidebar() {
     setShowChatBrowser(true);
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(word => word.charAt(0))
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
-  // Collapsed view - like ChatGPT
-  if (isCollapsed) {
-    return (
-      <>
-        {showResearchModal && (
-          <PoliticianSelectionModal
-            onSubmit={handlePoliticianSelect}
-            onClose={() => setShowResearchModal(false)}
-          />
-        )}
-        
-        <div className="sidebar-collapsed">
-          {/* Top buttons row */}
-          <div className="sidebar-collapsed-top">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleSidebar}
-              className="sidebar-toggle-btn"
-              title="Open sidebar"
-            >
-              <PanelLeftOpen className="h-5 w-5" />
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleNewResearch}
-              className="sidebar-new-research-btn"
-              title="New research"
-            >
-              <Plus className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  // Guest user expanded view
-  if (!user) {
-    return (
-      <>
-        {showResearchModal && (
-          <PoliticianSelectionModal
-            onSubmit={handlePoliticianSelect}
-            onClose={() => setShowResearchModal(false)}
-          />
-        )}
-        
-        <div className="sidebar-expanded">
-          {/* Header with close button */}
-          <div className="sidebar-header">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleSidebar}
-              className="sidebar-close-btn"
-              title="Close sidebar"
-            >
-              <PanelLeftClose className="h-5 w-5" />
-            </Button>
-          </div>
-          
-          {/* New Research Button */}
-          <div className="sidebar-actions">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleNewResearch}
-              className="sidebar-new-research-full"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              New Research
-            </Button>
-          </div>
-          
-          {/* Guest content */}
-          <div className="sidebar-guest-content">
-            <p className="text-sm text-gray-600 mb-4">Sign in to save your chat history</p>
-            <Button size="sm" asChild className="w-full">
-              <a href="/auth/login">
-                <LogIn className="h-4 w-4 mr-2" />
-                Log In
-              </a>
-            </Button>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  // Authenticated user expanded view
+  // Enhanced sidebar with consistent width management
   return (
     <>
-      {showResearchModal && (
-        <PoliticianSelectionModal
+      <div className={`${isCollapsed ? 'w-[60px]' : 'w-[280px]'} transition-all duration-300 bg-white border-r border-gray-200`}>
+        {!isCollapsed ? (
+          // Expanded sidebar - use our enhanced ChatSidebar
+          <div className="h-full flex flex-col min-h-0">
+            {/* Header with toggle and new research */}
+            <div className="p-4 border-b border-gray-200">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleSidebar}
+                className="p-2"
+              >
+                <PanelLeftClose className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleNewResearch}
+                className="p-2"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {/* Enhanced ChatSidebar with time-based grouping - takes remaining height */}
+            <div className="flex-1" style={{ height: 0 }}>
+              <ChatSidebar />
+            </div>
+          </div>
+        ) : (
+          // Collapsed sidebar - minimal interface
+          <div className="h-full flex flex-col items-center py-4 space-y-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleSidebar}
+              className="p-2"
+            >
+              <PanelLeftOpen className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleNewResearch}
+              className="p-2"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleOpenChatBrowser}
+              className="p-2"
+            >
+              <Search className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </div>
+      
+      {showModal && (
+        <PoliticianSelectionModal 
           onSubmit={handlePoliticianSelect}
-          onClose={() => setShowResearchModal(false)}
+          onClose={() => setShowModal(false)}
         />
       )}
       
       {showChatBrowser && (
-        <ChatBrowserModal
+        <ChatBrowserModal 
           onClose={() => setShowChatBrowser(false)}
         />
       )}
-      
-      <div className="sidebar-expanded">
-        {/* Header with close button */}
-        <div className="sidebar-header">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleSidebar}
-            className="sidebar-close-btn"
-            title="Close sidebar"
-          >
-            <PanelLeftClose className="h-5 w-5" />
-          </Button>
-        </div>
-        
-        {/* Action buttons */}
-        <div className="sidebar-actions">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleNewResearch}
-            className="sidebar-new-research-full"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            New Research
-          </Button>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleOpenChatBrowser}
-            className="sidebar-search-btn"
-          >
-            <Search className="h-4 w-4 mr-2" />
-            Search
-          </Button>
-        </div>
-        
-        {/* Chat history */}
-        <div className="sidebar-content">
-          <ChatSidebar />
-        </div>
-      </div>
     </>
   );
 } 

@@ -11,6 +11,7 @@ import { usePoliticians } from "@/context/PoliticianContext";
 import { ArrowLeft, ExternalLink, Calendar, MapPin, User, FileText } from "lucide-react";
 
 export default function PoliticianDetailPage() {
+  // Force re-render with updated styles - v2
   const params = useParams();
   const politicianId = parseInt(params.id as string);
   const { politicians, selectPolitician, unselectPolitician, selectedPoliticians } = usePoliticians();
@@ -59,23 +60,37 @@ export default function PoliticianDetailPage() {
     }
   };
   
-  if (isLoading) {
+  if (isLoading || !politician || !politician.id) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="text-center py-12">Loading politician information...</div>
-      </div>
-    );
-  }
-  
-  if (!politician) {
-    return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="text-center py-12">
-          <h1 className="text-2xl font-bold mb-4">Politician Not Found</h1>
-          <p className="mb-6">The politician you are looking for does not exist or has been removed.</p>
-          <Link href="/politicians">
-            <Button>View All Politicians</Button>
-          </Link>
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white border-b border-gray-200">
+          <div className="container mx-auto py-6 px-4">
+            <Link 
+              href="/politicians" 
+              className="inline-flex items-center text-primary hover:text-primary/80 font-medium transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to all politicians
+            </Link>
+          </div>
+        </div>
+        <div className="container mx-auto py-8 px-4">
+          <div className="text-center py-12">
+            {isLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading politician information...</p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-2xl font-bold mb-4">Politician Not Found</h1>
+                <p className="mb-6 text-gray-600">The politician you are looking for does not exist or has been removed.</p>
+                <Link href="/politicians">
+                  <Button>View All Politicians</Button>
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -90,182 +105,229 @@ export default function PoliticianDetailPage() {
   };
   
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="mb-6">
-        <Link href="/politicians" className="flex items-center text-blue-600 hover:underline">
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to all politicians
-        </Link>
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left column - Politician info */}
-        <div className="lg:col-span-1">
-          <Card className="p-6 sticky top-20">
-            <div className="flex flex-col items-center">
-              <div className="relative h-40 w-40 overflow-hidden rounded-full border mb-4">
-                <Image
-                  src={politician.image_url || politician.latest_research?.politician_image || "/placeholder-politician.jpg"}
-                  alt={politician.name}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              
-              <h1 className="text-2xl font-bold text-center mb-1">{politician.name}</h1>
-              {politician.latest_research?.position && (
-                <p className="text-gray-600 mb-2 flex items-center">
-                  <MapPin className="h-4 w-4 mr-1" />
-                  {politician.latest_research.position}
-                </p>
-              )}
-              
-              {politician.latest_research?.politician_party && (
-                <Badge variant="outline" className="mb-4">
-                  {politician.latest_research.politician_party}
-                </Badge>
-              )}
-              
-              <div className="w-full space-y-3">
-                <Button 
-                  variant={isSelected ? "default" : "outline"} 
-                  className="w-full"
-                  onClick={handleToggleSelection}
-                >
-                  {isSelected ? "Remove from Selection" : "Add to Selection"}
-                </Button>
-                
-                <Link href={`/compare?ids=${politicianId}`} className="w-full">
-                  <Button variant="outline" className="w-full">
-                    Compare With Others
-                  </Button>
-                </Link>
-                
-                <Link href={`/my-picks`} className="w-full">
-                  <Button variant="outline" className="w-full">
-                    View My Selected Politicians
-                  </Button>
-                </Link>
-                
-                <Link href={`/ask?about=${encodeURIComponent(politician.name)}`} className="w-full">
-                  <Button variant="secondary" className="w-full">
-                    Ask Clara About This Politician
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </Card>
+    <div className="h-full overflow-y-auto bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="container mx-auto py-4 px-4">
+          <Link 
+            href="/politicians" 
+            className="inline-flex items-center text-primary hover:text-primary/80 font-medium transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to all politicians
+          </Link>
         </div>
-        
-        {/* Right column - Politician details */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Research Summary */}
-          {politician.latest_research ? (
-            <>
-              <section>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold">Research Summary</h2>
-                  <div className="flex items-center text-sm text-gray-500">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    {formatDate(politician.latest_research.created_at)}
+      </div>
+
+      <div className="container mx-auto py-6 px-4 pb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left column - Politician info */}
+          <div className="lg:col-span-1">
+            <Card className="overflow-hidden bg-white shadow-lg border-0 sticky top-20">
+              {/* Hero section with gradient background */}
+              <div className="relative h-32 bg-gradient-to-br from-primary/10 via-primary/5 to-blue-50">
+                <div className="absolute inset-0 bg-black/5"></div>
+              </div>
+              
+              {/* Profile section */}
+              <div className="relative px-6 pb-6">
+                {/* Profile image */}
+                <div className="relative -mt-16 mb-4 flex justify-center">
+                  <div className="relative h-32 w-32 overflow-hidden rounded-full border-4 border-white shadow-xl bg-white">
+                    <Image
+                      src={politician.image_url || politician.latest_research?.politician_image || "/placeholder-politician.jpg"}
+                      alt={politician.name || 'Politician'}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
                 </div>
                 
-                {politician.latest_research.summary && (
-                  <Card className="p-4 mb-4">
-                    <p className="text-gray-700">{politician.latest_research.summary}</p>
-                  </Card>
-                )}
-              </section>
-              
-              {/* Background */}
-              {politician.latest_research.background && (
-                <section>
-                  <h2 className="text-xl font-bold mb-4 flex items-center">
-                    <User className="h-5 w-5 mr-2" />
-                    Background
-                  </h2>
-                  <Card className="p-4">
-                    <div className="prose prose-sm max-w-none text-gray-700">
-                      {politician.latest_research.background.split('\n').map((paragraph: string, index: number) => (
-                        <p key={index} className="mb-3">{paragraph}</p>
-                      ))}
+                {/* Basic info */}
+                <div className="text-center mb-6">
+                  <h1 className="text-2xl font-bold text-gray-900 mb-2">{politician.name || 'Unknown Politician'}</h1>
+                  
+                  {politician.latest_research?.position && (
+                    <div className="flex items-center justify-center text-gray-600 mb-3">
+                      <MapPin className="h-4 w-4 mr-2 text-primary" />
+                      <span className="font-medium">{politician.latest_research.position}</span>
                     </div>
-                  </Card>
-                </section>
-              )}
-              
-              {/* Accomplishments */}
-              {politician.latest_research.accomplishments && (
-                <section>
-                  <h2 className="text-xl font-bold mb-4 flex items-center">
-                    <FileText className="h-5 w-5 mr-2" />
-                    Key Accomplishments
-                  </h2>
-                  <Card className="p-4">
-                    <div className="prose prose-sm max-w-none text-gray-700">
-                      {politician.latest_research.accomplishments.split('\n').map((paragraph: string, index: number) => (
-                        <p key={index} className="mb-3">{paragraph}</p>
-                      ))}
-                    </div>
-                  </Card>
-                </section>
-              )}
-              
-              {/* Criticisms */}
-              {politician.latest_research.criticisms && (
-                <section>
-                  <h2 className="text-xl font-bold mb-4">Criticisms & Challenges</h2>
-                  <Card className="p-4 border-orange-200 bg-orange-50">
-                    <div className="prose prose-sm max-w-none text-gray-700">
-                      {politician.latest_research.criticisms.split('\n').map((paragraph: string, index: number) => (
-                        <p key={index} className="mb-3">{paragraph}</p>
-                      ))}
-                    </div>
-                  </Card>
-                </section>
-              )}
-            </>
-          ) : (
-            <section>
-              <h2 className="text-xl font-bold mb-4">No Research Available</h2>
-              <Card className="p-8 text-center">
-                <p className="text-gray-600 mb-4">
-                  No detailed research has been conducted on this politician yet.
-                </p>
-                <Link href={`/ask?about=${encodeURIComponent(politician.name)}`}>
-                  <Button>
-                    Research This Politician
-                  </Button>
-                </Link>
-              </Card>
-            </section>
-          )}
-          
-          {/* Basic Information */}
-          <section>
-            <h2 className="text-xl font-bold mb-4">Basic Information</h2>
-            <Card className="p-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <strong>Name:</strong> {politician.name}
+                  )}
+                  
+                  {politician.latest_research?.politician_party && (
+                    <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 font-medium">
+                      {politician.latest_research.politician_party}
+                    </Badge>
+                  )}
                 </div>
-                {politician.latest_research?.position && (
-                  <div>
-                    <strong>Position:</strong> {politician.latest_research.position}
+                
+                {/* Action buttons */}
+                <div className="space-y-3">
+                  <Button 
+                    variant={isSelected ? "default" : "outline"} 
+                    className="w-full font-medium"
+                    onClick={handleToggleSelection}
+                  >
+                    {isSelected ? "✓ Added to Selection" : "Add to Selection"}
+                  </Button>
+                  
+                  <div className="grid grid-cols-1 gap-2">
+                    <Link href={`/compare?ids=${politicianId}`} className="w-full">
+                      <Button variant="outline" className="w-full text-sm">
+                        Compare With Others
+                      </Button>
+                    </Link>
+                    
+                    <Link href={`/my-picks`} className="w-full">
+                      <Button variant="outline" className="w-full text-sm">
+                        View My Selections
+                      </Button>
+                    </Link>
                   </div>
-                )}
-                {politician.latest_research?.politician_party && (
-                  <div>
-                    <strong>Party:</strong> {politician.latest_research.politician_party}
-                  </div>
-                )}
-                <div>
-                  <strong>Added to Database:</strong> {formatDate(politician.created_at)}
+                  
+                  <Link href={`/ask?about=${encodeURIComponent(politician.name || '')}`} className="w-full">
+                    <Button variant="default" className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 font-medium">
+                      Ask Clara About {politician.name?.split(' ')[0] || 'Politician'}
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </Card>
-          </section>
+          </div>
+          {/* Right column - Politician details */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Research Summary */}
+            {politician.latest_research ? (
+              <>
+                <section>
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900">Research Summary</h2>
+                    <div className="flex items-center text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      {formatDate(politician.latest_research.created_at)}
+                    </div>
+                  </div>
+                  
+                  {politician.latest_research.summary && (
+                    <Card className="p-6 bg-white shadow-sm border-0 shadow-lg">
+                      <div className="prose prose-sm max-w-none text-gray-800 leading-relaxed text-justify">
+                        {politician.latest_research.summary}
+                      </div>
+                    </Card>
+                  )}
+                </section>
+                
+                {/* Background */}
+                {politician.latest_research.background && (
+                  <section>
+                    <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                      <div className="h-8 w-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                        <User className="h-4 w-4 text-blue-600" />
+                      </div>
+                      Background
+                    </h2>
+                    <Card className="p-6 bg-white shadow-sm border-0 shadow-lg">
+                      <div className="prose prose-sm max-w-none text-gray-800 leading-relaxed text-justify">
+                        {politician.latest_research.background.split('\n').map((paragraph: string, index: number) => (
+                          paragraph.trim() && <p key={index} className="mb-4 last:mb-0">{paragraph}</p>
+                        ))}
+                      </div>
+                    </Card>
+                  </section>
+                )}
+                
+                {/* Accomplishments */}
+                {politician.latest_research.accomplishments && (
+                  <section>
+                    <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                      <div className="h-8 w-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                        <FileText className="h-4 w-4 text-green-600" />
+                      </div>
+                      Key Accomplishments
+                    </h2>
+                    <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 shadow-lg border-0">
+                      <div className="prose prose-sm max-w-none text-gray-800 leading-relaxed text-justify">
+                        {politician.latest_research.accomplishments.split('\n').map((paragraph: string, index: number) => (
+                          paragraph.trim() && <p key={index} className="mb-4 last:mb-0">{paragraph}</p>
+                        ))}
+                      </div>
+                    </Card>
+                  </section>
+                )}
+                
+                {/* Criticisms */}
+                {politician.latest_research.criticisms && (
+                  <section>
+                    <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                      <div className="h-8 w-8 bg-amber-100 rounded-lg flex items-center justify-center mr-3">
+                        <ExternalLink className="h-4 w-4 text-amber-600" />
+                      </div>
+                      Criticisms & Challenges
+                    </h2>
+                    <Card className="p-6 bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200 shadow-lg border-0">
+                      <div className="prose prose-sm max-w-none text-gray-800 leading-relaxed text-justify">
+                        {politician.latest_research.criticisms.split('\n').map((paragraph: string, index: number) => (
+                          paragraph.trim() && <p key={index} className="mb-4 last:mb-0">{paragraph}</p>
+                        ))}
+                      </div>
+                    </Card>
+                  </section>
+                )}
+              </>
+            ) : (
+              <section>
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">No Research Available</h2>
+                <Card className="p-8 text-center bg-gray-50 border-0 shadow-lg">
+                  <div className="max-w-md mx-auto">
+                    <div className="h-16 w-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <FileText className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <p className="text-gray-600 mb-6">
+                      No detailed research has been conducted on this politician yet.
+                    </p>
+                    <Link href={`/ask?about=${encodeURIComponent(politician.name || '')}`}>
+                      <Button className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80">
+                        Research This Politician
+                      </Button>
+                    </Link>
+                  </div>
+                </Card>
+              </section>
+            )}
+            
+            {/* Basic Information */}
+            <section>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Basic Information</h2>
+              <Card className="p-6 bg-white shadow-sm border-0 shadow-lg">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Full Name</span>
+                      <p className="text-gray-900 font-medium">{politician.name || 'Unknown'}</p>
+                    </div>
+                    {politician.latest_research?.position && (
+                      <div>
+                        <span className="text-sm font-medium text-gray-500">Position</span>
+                        <p className="text-gray-900 font-medium">{politician.latest_research.position}</p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-4">
+                    {politician.latest_research?.politician_party && (
+                      <div>
+                        <span className="text-sm font-medium text-gray-500">Political Party</span>
+                        <p className="text-gray-900 font-medium">{politician.latest_research.politician_party}</p>
+                      </div>
+                    )}
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Added to Database</span>
+                      <p className="text-gray-900 font-medium">{formatDate(politician.created_at)}</p>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </section>
+          </div>
         </div>
       </div>
     </div>
