@@ -315,6 +315,7 @@ export function EnhancedChatInterface() {
                   />
                 </React.Fragment>
               ))}
+              <div ref={messagesEndRef} /> {/* Add this line */}
             </div>
           ) : !chatStarted ? (
             <div className="h-full flex flex-col items-center justify-center py-16">
@@ -385,4 +386,4 @@ export function EnhancedChatInterface() {
       )}
     </div>
   );
-} 
+}
