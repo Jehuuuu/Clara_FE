@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Card } from "@/components/common/Card";
@@ -42,6 +42,13 @@ export function PoliticianCard({
   onSelect,
   variant = "default" 
 }: PoliticianCardProps) {
+  const [isSelecting, setIsSelecting] = useState(false);
+  
+  const handleToggleSelection = async () => {
+    setIsSelecting(true);
+    await onSelect?.(); // This calls the toggleSelection from context
+    setIsSelecting(false);
+  };
   
   if (variant === "compact") {
     return (
@@ -169,8 +176,24 @@ export function PoliticianCard({
           </div>
         </div>
       </div>
+
+      <Button 
+        onClick={handleToggleSelection}
+        disabled={isSelecting}
+        variant={isSelected ? "default" : "outline"}
+        className="w-full"
+      >
+        {isSelecting ? (
+          <span className="flex items-center">
+            <span className="animate-spin mr-2 h-4 w-4 border-2 border-b-transparent rounded-full"></span>
+            {isSelected ? "Removing..." : "Adding..."}
+          </span>
+        ) : (
+          isSelected ? "✓ Selected" : "Add to My Picks"
+        )}
+      </Button>
     </Card>
   );
 }
 
-export default PoliticianCard; 
+export default PoliticianCard;

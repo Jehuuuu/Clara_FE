@@ -9,16 +9,21 @@ import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
 import { Card } from "@/components/common/Card";
 import { usePoliticians } from "@/context/PoliticianContext";
-import { ArrowLeft, ExternalLink, Calendar, MapPin, User, FileText } from "lucide-react";
+import { ArrowLeft, ExternalLink, Calendar, MapPin, User, FileText, Loader2 } from "lucide-react";
 
 export default function PoliticianDetailPage() {
   // Force re-render with updated styles - v2
   const params = useParams();
   const politicianId = parseInt(params.id as string);
-  const { politicians, selectPolitician, unselectPolitician, selectedPoliticians } = usePoliticians();
+  const { 
+    politicians, 
+    selectedPoliticians, 
+    toggleSelection // This is the API function we'll use
+  } = usePoliticians();
   
   const [politician, setPolitician] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isToggling, setIsToggling] = useState(false); // New state for button loading
   
   useEffect(() => {
     const fetchData = async () => {
@@ -53,11 +58,16 @@ export default function PoliticianDetailPage() {
   
   const isSelected = selectedPoliticians.includes(politicianId);
   
-  const handleToggleSelection = () => {
-    if (isSelected) {
-      unselectPolitician(politicianId);
-    } else {
-      selectPolitician(politicianId);
+  // Update this function to use the API-connected toggleSelection
+  const handleToggleSelection = async () => {
+    setIsToggling(true);
+    try {
+      await toggleSelection(politicianId);
+    } catch (error) {
+      console.error("Error toggling politician selection:", error);
+      // You could add a toast notification here for errors
+    } finally {
+      setIsToggling(false);
     }
   };
   
@@ -168,8 +178,16 @@ export default function PoliticianDetailPage() {
                     variant={isSelected ? "default" : "outline"} 
                     className="w-full font-medium"
                     onClick={handleToggleSelection}
+                    disabled={isToggling}
                   >
-                    {isSelected ? "✓ Added to Selection" : "Add to Selection"}
+                    {isToggling ? (
+                      <span className="flex items-center justify-center">
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        {isSelected ? "Removing..." : "Adding..."}
+                      </span>
+                    ) : (
+                      isSelected ? "✓ Added to Selection" : "Add to Selection"
+                    )}
                   </Button>
                   
                   <div className="grid grid-cols-1 gap-2">

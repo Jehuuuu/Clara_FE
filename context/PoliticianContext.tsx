@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { useAuth } from './AuthContext';
 
 // Define the Politician interface based on the API response
 interface Politician {
@@ -84,6 +85,7 @@ export function PoliticianProvider({ children }: { children: ReactNode }) {
     partyFilter: null as string | null,
     positionFilter: null as string | null,
   });
+  const { user } = useAuth();
 
   // Fetch politicians from API
   useEffect(() => {
@@ -117,6 +119,52 @@ export function PoliticianProvider({ children }: { children: ReactNode }) {
     fetchPoliticians();
   }, []);
 
+  // Fetch user's selected politicians from API
+  useEffect(() => {
+    const fetchUserPicks = async () => {
+      if (!user?.refreshToken) return;
+      
+      try {
+        console.log("Fetching user picks...");
+        const response = await fetch('http://127.0.0.1:8000/api/auth/politicians/picks/', {
+          headers: {
+            'Authorization': `Bearer ${user.refreshToken}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log("User picks response:", data);
+          
+          // Handle different possible response formats
+          let pickedIds: number[] = [];
+          
+          if (data.politicians && Array.isArray(data.politicians)) {
+            // Format: { politicians: [{ id: number, name: string }] }
+            pickedIds = data.politicians.map(politician => politician.id).filter(Boolean);
+          } else if (Array.isArray(data)) {
+            // If the API returns an array of objects with id property
+            pickedIds = data.map(pick => pick.id || (typeof pick === 'number' ? pick : null))
+              .filter(id => id !== null);
+          } else if (data.results && Array.isArray(data.results)) {
+            // If the API returns a wrapper object with results array
+            pickedIds = data.results.map(pick => pick.id || (typeof pick === 'number' ? pick : null))
+              .filter(id => id !== null);
+          }
+          
+          console.log("Processed picked IDs:", pickedIds);
+          setSelectedPoliticians(pickedIds);
+        } else {
+          console.error("Failed to fetch picks:", await response.text());
+        }
+      } catch (error) {
+        console.error('Error fetching politician picks:', error);
+      }
+    };
+    
+    fetchUserPicks();
+  }, [user?.refreshToken]);
+
   // Politician selection methods
   const selectPolitician = (id: number) => {
     if (selectedPoliticians.includes(id)) return;
@@ -142,11 +190,33 @@ export function PoliticianProvider({ children }: { children: ReactNode }) {
     setSelectedPoliticians(selectedPoliticians.filter(politicianId => politicianId !== id));
   };
 
-  const toggleSelection = (id: number) => {
-    if (selectedPoliticians.includes(id)) {
-      unselectPolitician(id);
-    } else {
-      selectPolitician(id);
+  const toggleSelection = async (politicianId: number) => {
+    if (!user?.refreshToken) return;
+    
+    const isCurrentlySelected = selectedPoliticians.includes(politicianId);
+    const endpoint = isCurrentlySelected 
+      ? `/api/auth/politicians/remove/${politicianId}/`
+      : `/api/auth/politicians/add/${politicianId}/`;
+      
+    try {
+      const response = await fetch(`http://127.0.0.1:8000${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${user.refreshToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        // Update local state after successful API call
+        setSelectedPoliticians(prev => 
+          isCurrentlySelected
+            ? prev.filter(id => id !== politicianId)
+            : [...prev, politicianId]
+        );
+      }
+    } catch (error) {
+      console.error('Error updating politician pick:', error);
     }
   };
 
@@ -266,4 +336,4 @@ export function usePoliticians() {
     throw new Error("usePoliticians must be used within a PoliticianProvider");
   }
   return context;
-} 
+}
