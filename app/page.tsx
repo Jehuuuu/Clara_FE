@@ -22,7 +22,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen overflow-y-auto">
       {/* Hero Section */}
       <section className="relative py-20 md:py-32 overflow-hidden bg-gradient-to-r from-violet-500 to-indigo-700 text-white">
         <div className="absolute inset-0 bg-black/30"></div>
@@ -35,13 +35,13 @@ export default function Home() {
               Compare politicians, understand policy positions, and make confident decisions at the ballot box.
             </p>
             
-            {/* Search Bar */}
+            {/* Search Bar - Updated placeholder text */}
             <form onSubmit={handleSearch} className="max-w-xl mx-auto relative">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-white/70" />
                 <input
                   type="text"
-                  placeholder="Search politicians, parties, or issues..."
+                  placeholder="Search politicians..."
                   className="w-full py-3 pl-10 pr-16 rounded-full bg-white/20 border border-white/30 text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-white/50"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -59,7 +59,7 @@ export default function Home() {
       </section>
       
       {/* Features Section */}
-      <section className="py-16 bg-background">
+      {/* <section className="py-16 bg-background">
         <div className="container px-4 mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
@@ -90,10 +90,10 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
       
       {/* Featured Politicians */}
-      <section className="py-16 bg-muted/30">
+      {/* <section className="py-16 bg-muted/30">
         <div className="container px-4 mx-auto">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-bold">Featured Politicians</h2>
@@ -113,7 +113,7 @@ export default function Home() {
             </div>
           )}
         </div>
-      </section>
+      </section> */}
       
       {/* CTA Section - Hidden per user request */}
       {/* <section className="py-16 bg-accent">
@@ -133,4 +133,4 @@ export default function Home() {
       </section> */}
     </div>
   );
-} 
+}

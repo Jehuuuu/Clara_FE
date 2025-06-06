@@ -640,11 +640,6 @@ ul ul ul {
   @apply select-none;
 }
 
-/* Ask Page Layout - Proper height constraints */
-.app-container {
-  @apply h-full;
-}
-
 .main-layout {
   @apply flex h-full;
 }
