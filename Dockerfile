@@ -1,11 +1,10 @@
-# Dockerfile for Clara_FE (Next.js Frontend)
+# frontend/Dockerfile
 FROM node:18-alpine
 
 WORKDIR /app
-
-COPY package.json package-lock.json* ./
-RUN npm install
-
 COPY . .
+RUN npm install
+RUN npm run build
 
-CMD ["npm", "run", "dev"]
+EXPOSE 3000
+CMD ["npm", "start"]
