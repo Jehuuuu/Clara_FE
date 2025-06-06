@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { Search, Filter, X, ArrowRightLeft, Star, PanelLeftClose, PanelLeftOpen, RefreshCw, ChevronDown, ChevronUp, Heart, Users } from "lucide-react";
+import { Search, Filter, X, PanelLeftClose, PanelLeftOpen, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { Badge } from "@/components/common/Badge";
 import { usePoliticians } from "@/context/PoliticianContext";
@@ -87,50 +87,45 @@ function HighlightedText({ text, searchTerm }: { text: string; searchTerm: strin
   );
 }
 
-// Compact Politician Card component with modern styling - maintains current size and aspect ratio
+// Updated CompactPoliticianCard component - simplified
 interface CompactPoliticianCardProps {
   politician: Politician; 
-  isSelected: boolean; 
-  onSelect: () => void;
   searchTerm: string;
 }
 
-function CompactPoliticianCard({ politician, isSelected, onSelect, searchTerm }: CompactPoliticianCardProps) {
+function CompactPoliticianCard({ politician, searchTerm }: CompactPoliticianCardProps) {
+  const handleClick = () => {
+    window.location.href = `/politician/${politician.id}`;
+  };
+
   return (
     <div
-      className={`
+      className="
         relative group cursor-pointer transition-all duration-200 ease-in-out
         w-[104px] h-[105px]
         outline-none focus:outline-none
-        ${isSelected 
-          ? 'scale-105' 
-          : 'hover:scale-105 hover:shadow-lg hover:-translate-y-1'
-        }
-      `}
-      onClick={onSelect}
+        hover:scale-105 hover:shadow-lg hover:-translate-y-1
+      "
+      onClick={handleClick}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            onSelect();
+          e.preventDefault();
+          handleClick();
         }
       }}
       tabIndex={0}
       role="button"
-      aria-label={`Select ${politician.name}`}
+      aria-label={`View ${politician.name}`}
     >
-      {/* Modern card with enhanced styling and fixed dimensions */}
-      <Card className={`
+      <Card className="
         p-2 h-full w-full
-        ${isSelected 
-          ? 'bg-primary/10 border-primary/30 dark:bg-primary/20 dark:border-primary/40' 
-          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
-        }
+        bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700
         border rounded-xl
         shadow-sm hover:shadow-md
         transition-all duration-200 ease-in-out
         group-hover:border-gray-300 dark:group-hover:border-gray-600
         backdrop-blur-sm
-      `}>
+      ">
         <div className="flex flex-col items-center text-center space-y-1.5 h-full">
           {/* Politician avatar with modern styling */}
           <div className="
@@ -144,7 +139,7 @@ function CompactPoliticianCard({ politician, isSelected, onSelect, searchTerm }:
             group-hover:scale-105
           ">
             {politician.image_url ? (
-          <Image
+              <Image
                 src={politician.image_url}
                 alt={`${politician.name} - Profile Image`}
                 fill
@@ -168,8 +163,8 @@ function CompactPoliticianCard({ politician, isSelected, onSelect, searchTerm }:
                 </span>
               </div>
             )}
-        </div>
-        
+          </div>
+          
           {/* Politician information */}
           <div className="space-y-0.5 min-h-0 flex-1 flex flex-col justify-center">
             {/* Politician name with modern typography and highlighting */}
@@ -193,21 +188,6 @@ function CompactPoliticianCard({ politician, isSelected, onSelect, searchTerm }:
               </p>
             )}
           </div>
-          
-          {/* Selection indicator with modern design */}
-          {isSelected && (
-            <div className="
-              absolute -top-1 -right-1 w-5 h-5 
-              bg-gradient-to-r from-primary to-primary/80
-              rounded-full flex items-center justify-center
-              shadow-lg ring-2 ring-white dark:ring-gray-800
-              animate-in zoom-in-50 duration-200
-            ">
-              <Star className="
-                h-2.5 w-2.5 text-white fill-current
-              " />
-            </div>
-          )}
         </div>
       </Card>
     </div>
@@ -254,11 +234,12 @@ export default function PoliticiansPage() {
     politicians, 
     isLoading, 
     error, 
-    selectedPoliticians,
-    selectPolitician,
-    unselectPolitician,
-    selectionMode,
-    setSelectionModeWithClear,
+    // Remove selection-related context values:
+    // selectedPoliticians,
+    // selectPolitician,
+    // unselectPolitician,
+    // selectionMode,
+    // setSelectionModeWithClear,
     filter,
     setSearchTerm, 
     setPartyFilter,
@@ -269,11 +250,11 @@ export default function PoliticiansPage() {
     getUniquePositions,
   } = usePoliticians();
   
-  // UI state
+  // UI state - remove action dropdown state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showPartyDropdown, setShowPartyDropdown] = useState(false);
   const [showPositionDropdown, setShowPositionDropdown] = useState(false);
-  const [showActionDropdown, setShowActionDropdown] = useState(false);
+  // Remove: const [showActionDropdown, setShowActionDropdown] = useState(false);
 
   const searchParams = useSearchParams();
   const debouncedSearchTerm = useDebounce(filter.searchTerm, 300);
@@ -284,14 +265,13 @@ export default function PoliticiansPage() {
   const [partiesExpanded, setPartiesExpanded] = useState(false);
   const [positionsExpanded, setPositionsExpanded] = useState(false);
   
-  // Apply debounced search term to filter
+  // Keep debounced search term and URL search param effects
   useEffect(() => {
     if (filter.searchTerm !== debouncedSearchTerm) {
       setSearchTerm(debouncedSearchTerm);
     }
   }, [debouncedSearchTerm, filter.searchTerm, setSearchTerm]);
   
-  // Apply URL search param on initial load
   useEffect(() => {
     const initialSearch = searchParams.get("search");
     if (initialSearch) {
@@ -303,12 +283,11 @@ export default function PoliticiansPage() {
   const totalPoliticians = politicians.length;
   const hasActiveFilters = !!(filter.partyFilter || filter.positionFilter || filter.searchTerm);
   
-  // Function to get count for each party filter option
+  // Keep filter count functions
   const getPartyCount = (party: string) => {
     return politicians.filter(politician => politician.party === party).length;
   };
 
-  // Function to get count for each position filter option  
   const getPositionCount = (position: string) => {
     return politicians.filter(politician => politician.latest_research?.position === position).length;
   };
@@ -318,73 +297,15 @@ export default function PoliticiansPage() {
     setIsSidebarCollapsed(!isSidebarCollapsed);
   };
 
-  // Mode handlers
-  const handleModeChange = (mode: 'compare' | 'add-to-picks') => {
-    // Use the atomic clear and set method to avoid timing issues
-    setSelectionModeWithClear(mode);
-    setShowActionDropdown(false);
-  };
+  // Remove mode handlers:
+  // - handleModeChange
+  // - handleExitMode
+  // - handleAddToMyPicks
+  // - handleCompareSelected
+  // - handlePoliticianSelect
+  // - handlePoliticianClick 
 
-  const handleExitMode = () => {
-    // Use the atomic clear and set method to ensure clean exit
-    setSelectionModeWithClear('normal');
-  };
-
-  // Action handlers
-  const handleAddToMyPicks = async () => {
-    if (selectedPoliticians.length === 0) return;
-    
-    // TODO: Implement backend connection for adding to my picks
-    try {
-      const response = await fetch('/api/my-picks', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // Add auth headers here
-        },
-        body: JSON.stringify({
-          politician_ids: selectedPoliticians
-        })
-      });
-      
-      if (response.ok) {
-        // Clear selections and exit mode after successful add
-        setSelectionModeWithClear('normal');
-        // Show success message (implement toast/notification)
-        console.log('Added to My Picks successfully');
-      }
-    } catch (error) {
-      console.error('Failed to add to My Picks:', error);
-    }
-  };
-
-  const handleCompareSelected = () => {
-    if (selectedPoliticians.length === 2) {
-      window.location.href = `/compare?ids=${selectedPoliticians.join(',')}`;
-    }
-  };
-
-  // Handle politician selection
-  const handlePoliticianSelect = (id: number) => {
-    if (selectedPoliticians.includes(id)) {
-      unselectPolitician(id);
-    } else {
-      selectPolitician(id);
-    }
-  };
-
-  // Handle politician click - depends on current mode
-  const handlePoliticianClick = (id: number) => {
-    if (selectionMode === 'normal') {
-      // Normal mode: redirect to politician page
-      window.location.href = `/politician/${id}`;
-    } else {
-      // Compare or add-to-picks mode: select politician
-      handlePoliticianSelect(id);
-    }
-  };
-  
-  // Group politicians by position
+  // Group politicians by position - keep this function
   const getPoliticiansByPosition = () => {
     const groupedPoliticians: Record<string, Politician[]> = {};
     
@@ -417,7 +338,7 @@ export default function PoliticiansPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="flex">
-        {/* Collapsible Filter Sidebar - styled like ask page sidebar */}
+        {/* Collapsible Filter Sidebar - remove actions section */}
         {isSidebarCollapsed ? (
           <div className="
             w-[60px] bg-white dark:bg-gray-900 
@@ -437,103 +358,6 @@ export default function PoliticiansPage() {
               <PanelLeftOpen className="h-5 w-5 animate-in fade-in duration-200" />
             </Button>
             
-            {/* Actions button for collapsed sidebar */}
-            <div className="relative">
-          <Button 
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowActionDropdown(!showActionDropdown)}
-                className="w-8 h-8 p-0 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition-all duration-200 hover:scale-110"
-                title="Actions"
-          >
-                {selectionMode === 'compare' ? (
-                  <Users className="h-5 w-5 animate-in fade-in duration-200 delay-100" />
-                ) : selectionMode === 'add-to-picks' ? (
-                  <Heart className="h-5 w-5 animate-in fade-in duration-200 delay-100" />
-                ) : (
-                  <Star className="h-5 w-5 animate-in fade-in duration-200 delay-100" />
-            )}
-          </Button>
-              
-              {/* Actions dropdown for collapsed sidebar */}
-              {showActionDropdown && (
-                <div className="absolute left-full top-0 ml-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg animate-in slide-right-fade-in duration-200 z-50">
-                  {selectionMode === 'normal' ? (
-                    <div className="p-2 space-y-1">
-                      <button
-                        onClick={() => handleModeChange('add-to-picks')}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors duration-200"
-                      >
-                        <Heart className="h-4 w-4" />
-                        Add to My Picks
-                      </button>
-                      
-                      <button
-                        onClick={() => handleModeChange('compare')}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors duration-200"
-                      >
-                        <Users className="h-4 w-4" />
-                        Compare Politicians
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="p-3 space-y-2">
-                      <div className="flex items-center gap-2 mb-2">
-                        {selectionMode === 'compare' ? (
-                          <Users className="h-4 w-4 text-primary" />
-                        ) : (
-                          <Heart className="h-4 w-4 text-primary" />
-                        )}
-                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          {selectionMode === 'compare' ? 'Compare Mode' : 'Add to Picks Mode'}
-                        </span>
-                      </div>
-                      
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                        {selectionMode === 'compare' 
-                          ? `${selectedPoliticians.length}/2 selected`
-                          : `${selectedPoliticians.length} selected`
-                        }
-                      </div>
-                      
-                      {selectedPoliticians.length > 0 && (
-                        <div className="space-y-1">
-                          {selectionMode === 'compare' && selectedPoliticians.length === 2 && (
-                            <Button
-                              onClick={handleCompareSelected}
-                              size="sm"
-                              className="w-full text-xs"
-                            >
-                              Compare
-                            </Button>
-                          )}
-                          
-                          {selectionMode === 'add-to-picks' && selectedPoliticians.length > 0 && (
-                            <Button
-                              onClick={handleAddToMyPicks}
-                              size="sm"
-                              className="w-full text-xs"
-                            >
-                              Add to Picks
-                            </Button>
-                          )}
-                        </div>
-                      )}
-                      
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleExitMode}
-                        className="w-full text-xs"
-                      >
-                        Exit Mode
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
-        </div>
-        
             <Button
               variant="ghost"
               size="sm"
@@ -566,12 +390,12 @@ export default function PoliticiansPage() {
               </div>
               <div className="flex items-center gap-1">
                 {hasActiveFilters && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={clearFilters}
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={clearFilters}
                     className="h-7 px-2 text-xs text-gray-500 hover:text-gray-700 transition-all duration-200 hover:scale-105 animate-in zoom-in-95 duration-200 delay-400"
-                >
+                  >
                     Clear
                   </Button>
                 )}
@@ -585,101 +409,6 @@ export default function PoliticiansPage() {
                   <PanelLeftClose className="h-5 w-5" />
                 </Button>
               </div>
-            </div>
-            
-            {/* Actions Section - Top of sidebar after header */}
-            <div className="border-b border-gray-200 dark:border-gray-700 p-4">
-              {selectionMode === 'normal' ? (
-                // Normal mode: Show action selector
-                <div className="relative">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowActionDropdown(!showActionDropdown)}
-                    className="w-full justify-between transition-all duration-200"
-                  >
-                    Actions
-                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showActionDropdown ? 'rotate-180' : ''}`} />
-                  </Button>
-                  
-                  {showActionDropdown && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg animate-in slide-down-fade-in duration-200 z-50">
-                      <div className="p-2 space-y-1">
-                        <button
-                          onClick={() => handleModeChange('add-to-picks')}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors duration-200"
-                        >
-                          <Heart className="h-4 w-4" />
-                          Add to My Picks
-                        </button>
-                        
-                        <button
-                          onClick={() => handleModeChange('compare')}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors duration-200"
-                        >
-                          <Users className="h-4 w-4" />
-                          Compare Politicians
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                // Active mode: Show mode status and controls
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {selectionMode === 'compare' ? (
-                        <Users className="h-4 w-4 text-primary" />
-                      ) : (
-                        <Heart className="h-4 w-4 text-primary" />
-                      )}
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {selectionMode === 'compare' ? 'Compare Mode' : 'Add to Picks Mode'}
-                      </span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleExitMode}
-                      className="h-6 w-6 p-0"
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                  
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {selectionMode === 'compare' 
-                      ? `Select exactly 2 politicians to compare (${selectedPoliticians.length}/2 selected)`
-                      : `Select politicians to add to your picks (${selectedPoliticians.length} selected)`
-                    }
-                  </div>
-                  
-                  {selectedPoliticians.length > 0 && (
-                    <div className="space-y-2">
-                      {selectionMode === 'compare' && selectedPoliticians.length === 2 && (
-                        <Button
-                          onClick={handleCompareSelected}
-                          size="sm"
-                          className="w-full"
-                        >
-                          Compare Selected
-                        </Button>
-                      )}
-                      
-                      {selectionMode === 'add-to-picks' && selectedPoliticians.length > 0 && (
-                        <Button
-                          onClick={handleAddToMyPicks}
-                          size="sm"
-                          className="w-full"
-                        >
-                          Add {selectedPoliticians.length} to My Picks
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
             
             <div className="flex-1 overflow-y-auto p-4 space-y-6">
@@ -875,13 +604,13 @@ export default function PoliticiansPage() {
           </div>
         )}
         
-        {/* Main Content - responsive to sidebar state */}
+        {/* Main Content - responsive to sidebar state, remove selection mode indicators */}
         <div className={`
           flex-1 transition-all duration-300 ease-in-out
           ${isSidebarCollapsed ? 'ml-0' : 'ml-0'}
         `}>
           <div className="p-6">
-            {/* Header - Simplified, no compare button */}
+            {/* Header - Simplified, no mode indicator */}
             <div className="flex justify-between items-center mb-6 animate-in fade-in duration-200">
               <div className="animate-in fade-in duration-200 delay-100">
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Politicians</h1>
@@ -899,22 +628,8 @@ export default function PoliticiansPage() {
                   {' '}
                   {filteredPoliticians.length === 1 ? 'politician' : 'politicians'} 
                   {hasActiveFilters ? ' match your filters' : ' found'}
-          </div>
-              </div>
-              
-              {/* Show current mode indicator in main area */}
-              {selectionMode !== 'normal' && (
-                <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 border border-primary/20 rounded-lg">
-                  {selectionMode === 'compare' ? (
-                    <Users className="h-4 w-4 text-primary" />
-                  ) : (
-                    <Heart className="h-4 w-4 text-primary" />
-                  )}
-                  <span className="text-sm text-primary font-medium">
-                    {selectionMode === 'compare' ? 'Compare Mode' : 'Add to Picks Mode'}
-                  </span>
                 </div>
-              )}
+              </div>
             </div>
             
             {/* Active Filters */}
@@ -1047,11 +762,9 @@ export default function PoliticiansPage() {
                           style={{ animationDelay: `${(groupIndex * 100) + (politicianIndex * 50)}ms` }}
                         >
                           <CompactPoliticianCard
-                          politician={politician}
-                            isSelected={selectionMode !== 'normal' && selectedPoliticians.includes(politician.id)}
-                            onSelect={() => handlePoliticianClick(politician.id)}
+                            politician={politician}
                             searchTerm={filter.searchTerm || ""}
-                        />
+                          />
                         </div>
                       ))}
                     </div>

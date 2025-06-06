@@ -16,13 +16,35 @@ function PoliticianSelectionModal({ onSubmit, onClose }: {
   const [politician, setName] = useState("");
   const [position, setPosition] = useState("");
   const [error, setError] = useState("");
+  
+  // Define available positions as a constant
+  const availablePositions = [
+    "City Councilor",
+    "Vice Mayor",
+    "City Mayor",
+    "Provincial Board Member",
+    "Vice Governor",
+    "Governor",
+    "House Representative",
+    "Senator",
+    "Vice President",
+    "President"
+  ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Validate both fields are filled
     if (!politician.trim()) {
       setError("Please enter a politician name");
       return;
     }
+    if (!position) {
+      setError("Please select a position");
+      return;
+    }
+    
+    // Clear any errors and submit the form
+    setError("");
     onSubmit({ politician, position });
   };
 
@@ -52,15 +74,18 @@ function PoliticianSelectionModal({ onSubmit, onClose }: {
             
             <div>
               <label className="text-sm font-medium block mb-1">
-                Position (optional)
+                Position
               </label>
-              <input 
-                type="text" 
+              <select
                 value={position}
                 onChange={(e) => setPosition(e.target.value)}
-                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
-                placeholder="e.g., Senator, Mayor, Governor"
-              />
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary appearance-none bg-white"
+              >
+                <option value="">Select position</option>
+                {availablePositions.map((pos) => (
+                  <option key={pos} value={pos}>{pos}</option>
+                ))}
+              </select>
             </div>
             
             {error && (
@@ -231,12 +256,63 @@ function ChatBrowserModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+// Research Progress Modal component
+function ResearchProgressModal({ onClose }: { onClose: () => void }) {
+  const handleClose = () => {
+    // Close the modal
+    onClose();
+    // Redirect to /ask (effectively reloading the page)
+    window.location.href = '/ask';
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <Card className="w-full max-w-md">
+        <div className="p-6">
+          <div className="text-center mb-4">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-solid border-primary border-r-transparent mb-4"></div>
+            <h2 className="text-xl font-semibold">Clara is researching</h2>
+          </div>
+          <p className="text-center text-muted-foreground mb-6">
+            This may take a while, around 4-6 minutes. We will notify you once the research is done.
+          </p>
+          <div className="flex justify-center">
+            <Button 
+              type="button"
+              variant="ghost"
+              onClick={handleClose}
+            >
+              Close
+            </Button>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 export function ClientSidebar() {
   const { user } = useAuth();
-  const { createChat } = useChat();
+  const { createChat, isResearchLoading } = useChat(); // Add isResearchLoading from useChat
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [showChatBrowser, setShowChatBrowser] = useState(false);
+  const [showResearchProgress, setShowResearchProgress] = useState(false);
+  
+  // Monitor research loading state
+  useEffect(() => {
+    console.log("Research loading state changed:", isResearchLoading);
+    
+    // Only update state if it actually changed to avoid render loops
+    if (isResearchLoading && !showResearchProgress) {
+      setShowResearchProgress(true);
+    } 
+    else if (!isResearchLoading && showResearchProgress && document.querySelector('.research-complete-flag')) {
+      // Only hide progress modal when research is complete AND some flag element exists
+      // This prevents premature closing
+      setShowResearchProgress(false);
+    }
+  }, [isResearchLoading, showResearchProgress]);
 
   // Listen for modal open events from chat browser
   useEffect(() => {
@@ -259,8 +335,19 @@ export function ClientSidebar() {
   };
 
   const handlePoliticianSelect = (data: CreateChatParams) => {
+    // First set the modal state
     setShowModal(false);
-    createChat(data, user?.refreshToken || null);
+    
+    // Force the research progress modal to show regardless of the loading state
+    setShowResearchProgress(true);
+    
+    // Use a small timeout to ensure the modal renders before any state changes from createChat
+    setTimeout(() => {
+      createChat(data, user?.refreshToken || null);
+    }, 10);
+    
+    // Add logging to debug the issue
+    console.log("Research started for:", data.politician);
   };
 
   const handleOpenChatBrowser = () => {
@@ -337,6 +424,12 @@ export function ClientSidebar() {
         />
       )}
       
+      {showResearchProgress && (
+        <ResearchProgressModal 
+          onClose={() => setShowResearchProgress(false)}
+        />
+      )}
+      
       {showChatBrowser && (
         <ChatBrowserModal 
           onClose={() => setShowChatBrowser(false)}
@@ -344,4 +437,4 @@ export function ClientSidebar() {
       )}
     </>
   );
-} 
+}

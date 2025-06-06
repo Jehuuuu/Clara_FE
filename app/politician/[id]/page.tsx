@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import ReactMarkdown from 'react-markdown';
 import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
 import { Card } from "@/components/common/Card";
@@ -172,12 +173,6 @@ export default function PoliticianDetailPage() {
                   </Button>
                   
                   <div className="grid grid-cols-1 gap-2">
-                    <Link href={`/compare?ids=${politicianId}`} className="w-full">
-                      <Button variant="outline" className="w-full text-sm">
-                        Compare With Others
-                      </Button>
-                    </Link>
-                    
                     <Link href={`/my-picks`} className="w-full">
                       <Button variant="outline" className="w-full text-sm">
                         View My Selections
@@ -186,7 +181,7 @@ export default function PoliticianDetailPage() {
                   </div>
                   
                   <Link href={`/ask?about=${encodeURIComponent(politician.name || '')}`} className="w-full">
-                    <Button variant="default" className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 font-medium">
+                    <Button variant="default" className="mt-10 w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 font-medium">
                       Ask Clara About {politician.name?.split(' ')[0] || 'Politician'}
                     </Button>
                   </Link>
@@ -211,7 +206,9 @@ export default function PoliticianDetailPage() {
                   {politician.latest_research.summary && (
                     <Card className="p-6 bg-white shadow-sm border-0 shadow-lg">
                       <div className="prose prose-sm max-w-none text-gray-800 leading-relaxed text-justify">
-                        {politician.latest_research.summary}
+                        <ReactMarkdown>
+                          {politician.latest_research.summary}
+                        </ReactMarkdown>
                       </div>
                     </Card>
                   )}
@@ -226,11 +223,11 @@ export default function PoliticianDetailPage() {
                       </div>
                       Background
                     </h2>
-                    <Card className="p-6 bg-white shadow-sm border-0 shadow-lg">
+                    <Card className="p-6 bg-gradient-to-br from-slate-50 to-gray-50 border-slate-200 shadow-lg border-0">
                       <div className="prose prose-sm max-w-none text-gray-800 leading-relaxed text-justify">
-                        {politician.latest_research.background.split('\n').map((paragraph: string, index: number) => (
-                          paragraph.trim() && <p key={index} className="mb-4 last:mb-0">{paragraph}</p>
-                        ))}
+                        <ReactMarkdown>
+                          {politician.latest_research.background}
+                        </ReactMarkdown>
                       </div>
                     </Card>
                   </section>
@@ -247,9 +244,9 @@ export default function PoliticianDetailPage() {
                     </h2>
                     <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 shadow-lg border-0">
                       <div className="prose prose-sm max-w-none text-gray-800 leading-relaxed text-justify">
-                        {politician.latest_research.accomplishments.split('\n').map((paragraph: string, index: number) => (
-                          paragraph.trim() && <p key={index} className="mb-4 last:mb-0">{paragraph}</p>
-                        ))}
+                        <ReactMarkdown>
+                          {politician.latest_research.accomplishments}
+                        </ReactMarkdown>
                       </div>
                     </Card>
                   </section>
@@ -266,9 +263,9 @@ export default function PoliticianDetailPage() {
                     </h2>
                     <Card className="p-6 bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200 shadow-lg border-0">
                       <div className="prose prose-sm max-w-none text-gray-800 leading-relaxed text-justify">
-                        {politician.latest_research.criticisms.split('\n').map((paragraph: string, index: number) => (
-                          paragraph.trim() && <p key={index} className="mb-4 last:mb-0">{paragraph}</p>
-                        ))}
+                        <ReactMarkdown>
+                          {politician.latest_research.criticisms}
+                        </ReactMarkdown>
                       </div>
                     </Card>
                   </section>
@@ -332,4 +329,4 @@ export default function PoliticianDetailPage() {
       </div>
     </div>
   );
-} 
+}
