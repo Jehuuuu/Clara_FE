@@ -41,7 +41,7 @@ export function Navbar() {
             />
           </Link>
         </div>
-        
+
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
           {navItems.map(item => (
@@ -58,7 +58,7 @@ export function Navbar() {
               {item.label}
             </Link>
           ))}
-          
+
           {/* My Picks menu item with conditional rendering */}
             {user ? (
               <Link
@@ -79,7 +79,7 @@ export function Navbar() {
                 onMouseLeave={() => setShowMyPicksTooltip(false)}
               >
                 My Picks
-                
+
                 {showMyPicksTooltip && (
                   <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 px-3 py-1.5 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-50">
                     <div className="absolute left-1/2 -top-1 -translate-x-1/2 w-2 h-2 rotate-45 bg-gray-800"></div>
@@ -91,7 +91,7 @@ export function Navbar() {
         </nav>
 
         <div className="flex-1" />
-        
+
         {/* Right side items */}
         <div className="flex items-center space-x-2">
           {/* Theme toggle - Hidden per user request */}
@@ -104,7 +104,7 @@ export function Navbar() {
           >
             {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button> */}
-          
+
           {/* Authentication */}
           {user ? (
             <div className="relative">
@@ -116,12 +116,12 @@ export function Navbar() {
               >
                 <User className="h-5 w-5" />
               </Button>
-              
+
               {isProfileMenuOpen && (
                 <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5">
                   <div className="px-4 py-2 text-sm text-gray-700 dark:text-gray-200 border-b">
                     <p className="font-medium">{user.username}</p>
-                    <p className="text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+                    <p className="text-gray-500 dark:text-gray-400 truncate">{user.first_name} {user.last_name}</p>
                   </div>
                   <Link 
                     href="/profile" 
@@ -166,7 +166,7 @@ export function Navbar() {
               </Button>
             </div>
           )}
-          
+
           {/* Mobile menu button */}
           <Button
             variant="ghost"
@@ -179,7 +179,7 @@ export function Navbar() {
           </Button>
         </div>
       </div>
-      
+
       {/* Mobile Navigation */}
       {isMenuOpen && (
         <div className="md:hidden">
@@ -199,7 +199,7 @@ export function Navbar() {
                 {item.label}
               </Link>
             ))}
-            
+
             {/* Mobile My Picks with conditional rendering */}
             {user ? (
               <Link
@@ -223,14 +223,14 @@ export function Navbar() {
                 <span className="ml-2 text-xs">Sign in required</span>
               </div>
             )}
-            
+
             {/* Mobile authentication links */}
             {user ? (
               <>
                 <div className="border-t border-gray-200 dark:border-gray-700 my-3 pt-3">
                   <div className="px-3 py-2">
-                    <p className="font-medium">{user.name}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+                    <p className="font-medium">{user.username}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{user.first_name} {user.last_name}</p>
                   </div>
                   <Link
                     href="/profile"
@@ -268,7 +268,7 @@ export function Navbar() {
                 </Link>
               </div>
             )}
-            
+
             {/* Dark mode toggle hidden per user request */}
             {/* <div className="flex items-center justify-between pt-4 border-t mt-4">
               <Button

@@ -45,10 +45,19 @@ export async function registerUser(payload: RegisterPayload): Promise<RegisterRe
     body: JSON.stringify(payload),
   });
 
-  const data = await res.json();
+  const data: any = await res.json();
 
   if (!res.ok) {
-    const errorMsg = data?.error || Object.values(data)[0]?.[0] || "Registration failed";
+    // Handle different error response formats
+    let errorMsg = "Registration failed";
+    if (data?.error) {
+      errorMsg = data.error;
+    } else if (Object.values(data).length > 0) {
+      const firstValue = Object.values(data)[0];
+      if (Array.isArray(firstValue) && firstValue.length > 0) {
+        errorMsg = firstValue[0];
+      }
+    }
     throw new Error(errorMsg);
   }
 

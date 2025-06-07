@@ -37,19 +37,19 @@ interface PoliticianContextType {
   issues: Issue[];
   isLoading: boolean;
   error: string | null;
-  
+
   // Selection mode
   selectionMode: 'compare' | 'add-to-picks' | 'normal';
   setSelectionMode: (mode: 'compare' | 'add-to-picks' | 'normal') => void;
   setSelectionModeWithClear: (mode: 'compare' | 'add-to-picks' | 'normal') => void;
-  
+
   // Selected politicians (for comparison)
   selectedPoliticians: number[];
   selectPolitician: (id: number) => void;
   unselectPolitician: (id: number) => void;
   toggleSelection: (id: number) => void;
   clearSelectedPoliticians: () => void;
-  
+
   // Filtering
   filter: {
     searchTerm: string;
@@ -62,7 +62,7 @@ interface PoliticianContextType {
   setPartyFilter: (party: string | null) => void;
   setPositionFilter: (position: string | null) => void;
   clearFilters: () => void;
-  
+
   // Getters
   getFilteredPoliticians: () => Politician[];
   getUniqueParties: () => string[];
@@ -93,15 +93,15 @@ export function PoliticianProvider({ children }: { children: ReactNode }) {
       try {
         setIsLoading(true);
         setError(null);
-        
+
         const response = await fetch("http://127.0.0.1:8000/api/politicians/");
-        
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
           setPoliticians(data.results);
         } else {
@@ -123,7 +123,7 @@ export function PoliticianProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const fetchUserPicks = async () => {
       if (!user?.refreshToken) return;
-      
+
       try {
         console.log("Fetching user picks...");
         const response = await fetch('http://127.0.0.1:8000/api/auth/politicians/picks/', {
@@ -131,27 +131,27 @@ export function PoliticianProvider({ children }: { children: ReactNode }) {
             'Authorization': `Bearer ${user.refreshToken}`
           }
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           console.log("User picks response:", data);
-          
+
           // Handle different possible response formats
           let pickedIds: number[] = [];
-          
+
           if (data.politicians && Array.isArray(data.politicians)) {
             // Format: { politicians: [{ id: number, name: string }] }
-            pickedIds = data.politicians.map(politician => politician.id).filter(Boolean);
+            pickedIds = data.politicians.map((politician: { id: number }) => politician.id).filter(Boolean);
           } else if (Array.isArray(data)) {
             // If the API returns an array of objects with id property
-            pickedIds = data.map(pick => pick.id || (typeof pick === 'number' ? pick : null))
-              .filter(id => id !== null);
+            pickedIds = data.map((pick: any) => pick.id || (typeof pick === 'number' ? pick : null))
+              .filter((id: any) => id !== null);
           } else if (data.results && Array.isArray(data.results)) {
             // If the API returns a wrapper object with results array
-            pickedIds = data.results.map(pick => pick.id || (typeof pick === 'number' ? pick : null))
-              .filter(id => id !== null);
+            pickedIds = data.results.map((pick: any) => pick.id || (typeof pick === 'number' ? pick : null))
+              .filter((id: any) => id !== null);
           }
-          
+
           console.log("Processed picked IDs:", pickedIds);
           setSelectedPoliticians(pickedIds);
         } else {
@@ -161,14 +161,14 @@ export function PoliticianProvider({ children }: { children: ReactNode }) {
         console.error('Error fetching politician picks:', error);
       }
     };
-    
+
     fetchUserPicks();
   }, [user?.refreshToken]);
 
   // Politician selection methods
   const selectPolitician = (id: number) => {
     if (selectedPoliticians.includes(id)) return;
-    
+
     // Apply selection limits based on mode
     if (selectionMode === 'compare') {
       // Limit to max 2 politicians for comparison
@@ -192,12 +192,12 @@ export function PoliticianProvider({ children }: { children: ReactNode }) {
 
   const toggleSelection = async (politicianId: number) => {
     if (!user?.refreshToken) return;
-    
+
     const isCurrentlySelected = selectedPoliticians.includes(politicianId);
     const endpoint = isCurrentlySelected 
       ? `/api/auth/politicians/remove/${politicianId}/`
       : `/api/auth/politicians/add/${politicianId}/`;
-      
+
     try {
       const response = await fetch(`http://127.0.0.1:8000${endpoint}`, {
         method: 'POST',
@@ -206,7 +206,7 @@ export function PoliticianProvider({ children }: { children: ReactNode }) {
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (response.ok) {
         // Update local state after successful API call
         setSelectedPoliticians(prev => 
