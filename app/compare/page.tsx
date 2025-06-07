@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/common/Button";
@@ -16,7 +16,7 @@ interface PoliticianIssue {
   keyProposals: string[];
 }
 
-export default function ComparePage() {
+function ComparePage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { politicians } = usePoliticians();
@@ -260,4 +260,12 @@ export default function ComparePage() {
       </div>
     </div>
   );
-} 
+}
+
+export default function ComparePageWrapper() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ComparePage />
+    </Suspense>
+  );
+}
